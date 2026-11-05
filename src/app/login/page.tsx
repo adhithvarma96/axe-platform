@@ -1,0 +1,28 @@
+"use client";
+import { useActionState } from "react";
+import { signIn, type SignInState } from "./actions";
+
+export default function LoginPage() {
+  const [state, action, pending] = useActionState<SignInState, FormData>(signIn, {});
+
+  return (
+    <main className="auth-page">
+      <form action={action} className="card auth-card">
+        <div className="logo">AXE <span>| realty</span></div>
+        <h1 style={{ fontSize: 26 }}>Sign in</h1>
+        <div className="field">
+          <label htmlFor="email">Work email</label>
+          <input id="email" name="email" type="email" autoComplete="username" required />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" name="password" type="password" autoComplete="current-password" required />
+        </div>
+        {state.error && <p className="error" role="alert">{state.error}</p>}
+        <button className="btn" type="submit" disabled={pending}>
+          {pending ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </main>
+  );
+}

@@ -1,0 +1,47 @@
+name: Monthly off-platform backup
+
+# A full SQL dump of production on the 1st of every month, kept as an encrypted
+# artifact for 90 days, so the business never depends on Supabase alone.
+# Supabase's own daily backups remain the first line of recovery.
+on:
+  schedule:
+    - cron: "30 20 1 * *" # 02:00 Asia/Colombo on the 1st
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    if: vars.PRODUCTION_PROJECT_REF != ''
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Dump schema, data and roles
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.PRODUCTION_PROJECT_REF }}"
+          mkdir backup
+          supabase db dump --linked -f backup/roles.sql --role-only
+          supabase db dump --linked -f backup/schema.sql
+          supabase db dump --linked -f backup/data.sql --use-copy --data-only
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          stamp=$(date -u +%Y-%m-%d)
+          tar czf "axe-db-$stamp.tgz" backup
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
+              --symmetric --cipher-algo AES256 "axe-db-$stamp.tgz"
+          rm -rf backup "axe-db-$stamp.tgz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: axe-db-backup
+          path: axe-db-*.tgz.gpg
+          retention-days: 90
