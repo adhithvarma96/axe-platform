@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient, getCurrentUser, needsMfa } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
 
@@ -16,6 +17,7 @@ export default function Home() {
 }
 
 async function SignedInHome() {
+  await connection(); // per-request: the session and token expiry depend on the current time
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (needsMfa(user)) redirect("/mfa");

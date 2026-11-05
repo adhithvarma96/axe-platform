@@ -41,9 +41,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const claims = claimsData?.claims;
   if (!claims?.sub) return null;
 
-  const [{ data: agent }, { data: aal }] = await Promise.all([
+  // aal comes from the verified token; factors from the Auth server (not the cookie).
+  const [{ data: agent }, { data: factors }] = await Promise.all([
     supabase.from("agents").select("id, full_name, role, status").eq("user_id", claims.sub).maybeSingle(),
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    supabase.auth.mfa.listFactors(),
   ]);
 
   return {
@@ -52,8 +53,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     agentId: agent?.status === "active" ? agent.id : null,
     fullName: agent?.full_name ?? null,
     role: agent?.status === "active" ? (agent.role as Role) : null,
-    aal: aal?.currentLevel === "aal2" ? "aal2" : "aal1",
-    hasMfaFactor: aal?.nextLevel === "aal2",
+    aal: claims.aal === "aal2" ? "aal2" : "aal1",
+    hasMfaFactor: (factors?.totp ?? []).some((f) => f.status === "verified"),
   };
 }
 
