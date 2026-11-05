@@ -40,7 +40,7 @@ Migrations live in `supabase/migrations/` and are the only way the schema change
 ```bash
 npx supabase migration new describe_the_change   # write SQL in the new file
 npm test                                         # must stay green
-npm run db:push                                  # staging (CI also does this on main)
+npx supabase db push --remote                    # staging (CI also does this on main)
 ```
 
 Production is pushed by hand after Adhith approves staging. See `docs/RUNBOOK.md`.

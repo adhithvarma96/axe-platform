@@ -36,7 +36,7 @@ Never paste a key into code, chat, Airtable scripts or Make.
 1. `npx supabase migration new <name>`, write the SQL, run `npm test`.
 2. Merge to `main`: CI tests it and pushes it to **staging**.
 3. Adhith checks staging.
-4. Production: `npx supabase link --project-ref <production ref>` then `npx supabase db push`.
+4. Production: `npx supabase link --project-ref <production ref>` then `npx supabase db push --remote`. (In Windows PowerShell type `npx.cmd` instead of `npx`.)
    Take a manual backup first (Supabase → Database → Backups) if the change alters or drops data.
 
 ## Restore a backup
