@@ -36,7 +36,12 @@
 | --- | --- | --- | --- |
 | Local | staging | `npm run dev` | developer |
 | Staging | `axe-staging` | preview deployments | Adhith approves here |
-| Production | `axe-production` | production | the team |
+| Production | `axe-production` | production (`main`) | the team |
+
+Vercel environment variables: the three Supabase values exist twice, once for **Production**
+(axe-production) and once for **All Pre-Production Environments** (axe-staging). `NEXT_PUBLIC_*`
+values are type Config (they are public by design); `SUPABASE_SECRET_KEY` and `CRON_SECRET` are Secret.
+`NEXT_PUBLIC_*` values are built into the app, so a settings change needs a new deployment.
 
 ## Schemas
 
