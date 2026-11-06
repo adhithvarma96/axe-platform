@@ -26,6 +26,7 @@ jobs:
       - name: Dump schema, data and roles
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
         run: |
           npx supabase link --project-ref "${{ vars.PRODUCTION_PROJECT_REF }}"
           mkdir backup
