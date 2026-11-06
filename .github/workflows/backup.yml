@@ -18,11 +18,6 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
       - name: Check settings (never prints the values)
         env:
           DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
@@ -34,7 +29,7 @@ jobs:
           [ -n "$BACKUP_PASSPHRASE" ] || { echo "::error::BACKUP_PASSPHRASE is empty or missing"; fail=1; }
           echo "password length: ${#DB_PASSWORD}"
           exit $fail
-      - name: Dump schema, data and roles
+      - name: Dump the production database
         env:
           REF: ${{ vars.PRODUCTION_PROJECT_REF }}
           # Session pooler for the project's region (Singapore). The pooler needs
@@ -47,9 +42,14 @@ jobs:
           DB_URL="postgresql://postgres.${REF}:${enc}@${POOLER_HOST}:5432/postgres"
           echo "::add-mask::$DB_URL"
           mkdir backup
-          npx supabase db dump --remote="$DB_URL" -f backup/roles.sql --role-only
-          npx supabase db dump --remote="$DB_URL" -f backup/schema.sql
-          npx supabase db dump --remote="$DB_URL" -f backup/data.sql --use-copy --data-only
+          # pg_dump 17 (matches the server) straight from the official image; the
+          # Supabase CLI's dump ignores the user in the URL. One full custom-format
+          # dump: schema, data, RLS policies, functions, triggers.
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/backup:/backup" postgres:17 \
+            pg_dump --dbname="$DB_URL" --format=custom --compress=9 --file=/backup/axe-production.dump
+          docker run --rm -v "$PWD/backup:/backup" postgres:17 \
+            pg_restore --list /backup/axe-production.dump > backup/contents.txt
+          echo "tables in dump: $(grep -c ' TABLE DATA public ' backup/contents.txt)"
           ls -la backup
       - name: Encrypt
         env:

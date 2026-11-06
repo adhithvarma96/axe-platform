@@ -59,15 +59,21 @@ This replaces the whole database; the app is unavailable for a few minutes.
 
 **Point-in-time recovery** (to the minute) is a paid add-on; enable it before go-live of the CRM (Phase 2).
 
-**Monthly off-platform dump** (GitHub → Actions → "Monthly off-platform backup" → artifact):
+**Monthly off-platform dump** (GitHub → Actions → "Monthly off-platform backup" → artifact `axe-db-backup`).
+One `pg_dump` custom-format file of the whole production database: schema, data, RLS policies,
+functions and triggers. Supabase's own system roles are not included; every Supabase project has them.
 
 ```bash
-gpg --decrypt axe-db-YYYY-MM-DD.tgz.gpg > backup.tgz   # passphrase: BACKUP_PASSPHRASE (in your password manager)
-tar xzf backup.tgz
-psql "$TARGET_DATABASE_URL" -f backup/roles.sql
-psql "$TARGET_DATABASE_URL" -f backup/schema.sql
-psql "$TARGET_DATABASE_URL" -c "SET session_replication_role = replica" -f backup/data.sql
+gpg --decrypt axe-db-YYYY-MM-DD.tgz.gpg > backup.tgz   # passphrase: BACKUP_PASSPHRASE (password manager)
+tar xzf backup.tgz                                     # -> backup/axe-production.dump, backup/contents.txt
+# Into a fresh Supabase project (its auth and storage schemas already exist), restore our schemas:
+pg_restore --dbname="$TARGET_DATABASE_URL" --no-owner --schema=public --schema=app backup/axe-production.dump
+# Logins, only into an empty project and only if Supabase's own backups are unavailable:
+pg_restore --dbname="$TARGET_DATABASE_URL" --data-only --schema=auth --table=users --table=identities --table=mfa_factors backup/axe-production.dump
 ```
+
+Use PostgreSQL 17 tools; `docker run --rm -it postgres:17 ...` works without installing anything.
+When connecting through Supabase's pooler, the user is `postgres.<project ref>`, not `postgres`.
 
 Test a restore into the staging project once a quarter and note the date here.
 
