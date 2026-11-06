@@ -31,6 +31,19 @@ Their records stay attached to them.
 
 Never paste a key into code, chat, Airtable scripts or Make.
 
+## GitHub settings (Settings → Secrets and variables → Actions)
+
+| Name | Type | Used by | Notes |
+| --- | --- | --- | --- |
+| `SUPABASE_ACCESS_TOKEN` | secret | CI, backup | Supabase account token `github-actions`, 1-year expiry |
+| `STAGING_DB_PASSWORD` | secret | CI | axe-staging database password |
+| `STAGING_PROJECT_REF` | variable | CI | `dkxdeaardevnwcohrxdn` |
+| `PRODUCTION_DB_PASSWORD` | secret | backup | axe-production database password |
+| `PRODUCTION_PROJECT_REF` | variable | backup | set when production is live |
+| `BACKUP_PASSPHRASE` | secret | backup | also stored in the password manager; needed to open a backup |
+
+If a database password is reset in Supabase, update the matching secret here or CI/backups fail.
+
 ## Ship a database change
 
 1. `npx supabase migration new <name>`, write the SQL, run `npm test`.
