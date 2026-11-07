@@ -76,7 +76,8 @@ const { data: devs } = await db.from("developments").select("id, name, slug").is
 const finalPath = (p) => (redirects[p]?.action === "301" ? redirects[p].to : p);
 
 for (const { type, path } of inventory) {
-  if (!["location", "development", "lifestyle", "property-type"].includes(type)) continue;
+  if (!["location", "development", "lifestyle", "property-type", "page"].includes(type)) continue;
+  if (type === "page" && (path === "/" || path === "/properties/")) continue; // built from data
   const c = await extract(path);
   const target = finalPath(path);
   const slug = target.split("/").filter(Boolean).pop();
@@ -100,7 +101,7 @@ for (const { type, path } of inventory) {
     report.pages.push({ path, target, record: `development: ${best.d.name}`, match: best.s.toFixed(2), intro_words: c.intro.split(" ").length, body_words: c.body.split(" ").length });
     if (APPLY) await db.from("developments").update({ slug, seo_title: c.title, seo_meta_description: c.description, seo_intro: c.intro, seo_body: c.body }).eq("id", best.d.id);
   } else {
-    const kind = type === "lifestyle" ? "lifestyle" : "intent";
+    const kind = type === "lifestyle" ? "lifestyle" : type === "page" ? "page" : "intent";
     report.pages.push({ path, target, record: `site page (${kind})`, intro_words: c.intro.split(" ").length, body_words: c.body.split(" ").length });
     if (APPLY) await db.from("site_pages").upsert({ path: target, kind, title: c.title, meta_description: c.description, h1: c.h1, intro: c.intro, body: c.body, source_url: `https://axerealty.lk${path}` });
   }

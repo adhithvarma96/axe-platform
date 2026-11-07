@@ -53,3 +53,6 @@ migration-reports/
 
 # Local credential files (service account keys). Never commit.
 .secrets/
+
+# working file with prices; never commit (moat rule)
+docs/migration/old-listings-redirects.csv

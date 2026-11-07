@@ -110,7 +110,8 @@ const cur = (table, rid, field, v) => (v == null ? null : ENUM.currency.includes
 // Supabase writes
 // ---------------------------------------------------------------------------
 async function upsert(table, rows, key = "airtable_id") {
-  report.tables[table] = { airtable: rows.length, written: 0, failed: 0 };
+  report.tables[table] ??= { airtable: 0, written: 0, failed: 0 };
+  report.tables[table].airtable += rows.length;
   if (!APPLY) return;
   for (let i = 0; i < rows.length; i += 200) {
     const batch = rows.slice(i, i + 200);
@@ -389,7 +390,13 @@ const propRows = at.properties.map((r) => {
   };
 });
 const seen = new Set();
-await upsert(P, propRows.filter((p) => p.listing_no && !seen.has(p.listing_no) && seen.add(p.listing_no)));
+const uniqueProps = propRows.filter((p) => p.listing_no && !seen.has(p.listing_no) && seen.add(p.listing_no));
+// The CRM owns the website switch once a property exists: a re-sync must never publish or
+// unpublish anything (2026-11-07 a re-sync copied Airtable's stale checkbox over all 641 rows).
+// Existing rows are upserted without the column; only brand-new rows take Airtable's value.
+const existingProps = new Set(APPLY ? ((await db.from(P).select("airtable_id").limit(100000)).data ?? []).map((p) => p.airtable_id) : []);
+await upsert(P, uniqueProps.filter((p) => !existingProps.has(p.airtable_id)));
+await upsert(P, uniqueProps.filter((p) => existingProps.has(p.airtable_id)).map(({ website_published: _omit, ...rest }) => rest));
 const propId = await idMap(P);
 const propIds = [...propId.values()];
 const featureByName = { penthouse: features.get("penthouse"), duplex: features.get("duplex"), "pet friendly": features.get("pet friendly"), "sea view": features.get("sea view") };
