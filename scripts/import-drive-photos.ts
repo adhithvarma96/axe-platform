@@ -32,11 +32,16 @@ const folderId = (url: string) => url.match(/\/folders\/([A-Za-z0-9_-]{10,})/)?.
 interface DriveFile { id: string; name: string; mimeType: string; size?: string; createdTime?: string }
 async function drive(path: string, params: Record<string, string>) {
   const qs = new URLSearchParams({ ...params, key: KEY, supportsAllDrives: "true", includeItemsFromAllDrives: "true" });
-  for (let attempt = 0; attempt < 4; attempt++) {
+  // Google throttles bursts of downloads with a 403 "Sorry..." page or rate-limit errors:
+  // back off 30s, 60s, 120s, 240s and retry; any other 4xx is a real error.
+  const waits = [0, 30_000, 60_000, 120_000, 240_000];
+  for (let attempt = 0; attempt < waits.length; attempt++) {
+    if (waits[attempt]) { console.log(`    (Google is throttling; waiting ${waits[attempt] / 1000}s)`); await new Promise((res) => setTimeout(res, waits[attempt])); }
     const r = await fetch(`https://www.googleapis.com/drive/v3/${path}?${qs}`);
     if (r.ok) return r;
-    if (r.status === 429 || r.status >= 500) { await new Promise((res) => setTimeout(res, 1500 * (attempt + 1))); continue; }
-    throw new Error(`Drive ${path}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const body = await r.text();
+    const throttled = r.status === 429 || r.status >= 500 || (r.status === 403 && /Sorry|rateLimit|userRateLimit|automated/i.test(body));
+    if (!throttled) throw new Error(`Drive ${path}: HTTP ${r.status} ${body.slice(0, 160)}`);
   }
   throw new Error(`Drive ${path}: gave up after retries`);
 }
@@ -84,6 +89,7 @@ for (const p of props!) {
   let done = 0;
   for (const f of files) {
     if (seenRefs.has(f.id)) { totals.skipped++; continue; }
+    await new Promise((res) => setTimeout(res, 1200)); // pace downloads to stay under Google's burst limit
     try {
       const bytes = Buffer.from(await (await drive(`files/${f.id}`, { alt: "media" })).arrayBuffer());
       const photo = await processPhoto(bytes);
