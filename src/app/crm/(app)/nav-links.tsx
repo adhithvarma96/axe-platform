@@ -10,6 +10,7 @@ const ITEMS: { href: string; label: string; soon?: boolean }[] = [
   { href: "/owners", label: "Owners" },
   { href: "/developments", label: "Developments" },
   { href: "/locations", label: "Locations" },
+  { href: "/website", label: "Website" },
 ];
 
 export function NavLinks() {

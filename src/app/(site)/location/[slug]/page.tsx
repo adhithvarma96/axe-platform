@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allListings, developments, locations } from "@/lib/site/data";
-import { Banner, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../../place";
+import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../../place";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ intent?: string }> };
 
@@ -35,7 +35,7 @@ async function Location({ params, searchParams }: Props) {
   const loc = locs.find((l) => l.slug === slug);
   if (!loc) notFound();
   const here = all.filter((l) => l.location_slug === slug);
-  const devTiles = devs.filter((d) => d.location_slug === slug && d.slug).map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: coverOf(all.filter((l) => l.development_slug === d.slug)) }));
+  const devTiles = devs.filter((d) => d.location_slug === slug && d.slug).map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: chosen(d.image) ?? coverOf(all.filter((l) => l.development_slug === d.slug)) }));
   const h1 = loc.seo_title?.split("|")[0].trim() || `Apartments for Sale & Rent in ${loc.name}`;
   const path = `/location/${slug}/`;
   return (

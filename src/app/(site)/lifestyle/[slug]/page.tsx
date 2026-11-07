@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allListings, sitePage } from "@/lib/site/data";
-import { Banner, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../../place";
+import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../../place";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ intent?: string }> };
 
@@ -42,10 +42,11 @@ async function Lifestyle({ params, searchParams }: Props) {
   const ls = LIFESTYLES[slug];
   if (!ls) notFound();
   const intent = (await searchParams).intent;
-  const [page, all] = await Promise.all([sitePage(`/lifestyle/${slug}/`), allListings()]);
+  const [page, all, ...otherPages] = await Promise.all([sitePage(`/lifestyle/${slug}/`), allListings(),
+    ...Object.keys(LIFESTYLES).filter((s) => s !== slug).map((s) => sitePage(`/lifestyle/${s}/`))]);
   const here = all.filter((l) => (l.features ?? []).includes(ls.feature));
-  const others = Object.entries(LIFESTYLES).filter(([s]) => s !== slug).map(([s, o]) => ({
-    href: `/lifestyle/${s}/`, name: o.name, img: coverOf(all.filter((l) => (l.features ?? []).includes(o.feature))),
+  const others = Object.entries(LIFESTYLES).filter(([s]) => s !== slug).map(([s, o], i) => ({
+    href: `/lifestyle/${s}/`, name: o.name, img: chosen(otherPages[i]?.image) ?? coverOf(all.filter((l) => (l.features ?? []).includes(o.feature))),
   }));
   return (
     <>

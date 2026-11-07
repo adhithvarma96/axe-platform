@@ -91,6 +91,11 @@ export function ListingsBlock({ title, listings, intent, basePath }: { title: st
   );
 }
 
+/** The image chosen in the app for a location, development or page (800 px), if any. */
+export function chosen(image: unknown): string | null {
+  return sizes(image)["800"]?.url ?? null;
+}
+
 export function coverOf(listings: WebListing[]): string | null {
   for (const l of listings) { const c = sizes(l.cover)["800"]; if (c) return c.url; }
   return null;

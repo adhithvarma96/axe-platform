@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { signOut } from "../login/actions";
+import { SignOutButton } from "../sign-out-button";
 import { NavLinks } from "./nav-links";
 
 // Authenticated app shell: white side menu with the red active state from the approved wireframe.
@@ -34,9 +34,7 @@ async function UserBox() {
         <div style={{ fontWeight: 600, color: "var(--ink)" }}>{user.fullName}</div>
         <div className="muted" style={{ fontSize: 12 }}>{user.role.replace("_", " ")}</div>
       </div>
-      <form action={signOut}>
-        <button className="btn btn-ghost btn-sm" type="submit">Sign out</button>
-      </form>
+      <SignOutButton />
     </div>
   );
 }

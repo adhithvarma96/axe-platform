@@ -1,9 +1,10 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { signIn, type SignInState } from "./actions";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState<SignInState, FormData>(signIn, {});
+  useEffect(() => { if (state.next) window.location.assign(state.next); }, [state.next]);
 
   return (
     <main className="auth-page">

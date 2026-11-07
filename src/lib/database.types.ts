@@ -1076,6 +1076,7 @@ export type Database = {
           towers_blocks: string | null
           updated_at: string
           updated_by: string | null
+          website_image: Json | null
           year_completed: number | null
         }
         Insert: {
@@ -1102,6 +1103,7 @@ export type Database = {
           towers_blocks?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
           year_completed?: number | null
         }
         Update: {
@@ -1128,6 +1130,7 @@ export type Database = {
           towers_blocks?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
           year_completed?: number | null
         }
         Relationships: [
@@ -1823,6 +1826,7 @@ export type Database = {
           slug: string | null
           updated_at: string
           updated_by: string | null
+          website_image: Json | null
         }
         Insert: {
           airtable_id?: string | null
@@ -1843,6 +1847,7 @@ export type Database = {
           slug?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
         }
         Update: {
           airtable_id?: string | null
@@ -1863,6 +1868,7 @@ export type Database = {
           slug?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
         }
         Relationships: [
           {
@@ -3390,6 +3396,7 @@ export type Database = {
           title: string | null
           updated_at: string
           updated_by: string | null
+          website_image: Json | null
         }
         Insert: {
           body?: string | null
@@ -3405,6 +3412,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
         }
         Update: {
           body?: string | null
@@ -3420,6 +3428,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           updated_by?: string | null
+          website_image?: Json | null
         }
         Relationships: []
       }
@@ -3662,6 +3671,7 @@ export type Database = {
             | Database["public"]["Enums"]["development_status"]
             | null
           hero_image_path: string | null
+          image: Json | null
           listing_count: number | null
           location_name: string | null
           location_slug: string | null
@@ -3734,6 +3744,7 @@ export type Database = {
       }
       web_locations: {
         Row: {
+          image: Json | null
           listing_count: number | null
           market_tier: Database["public"]["Enums"]["market_tier"] | null
           name: string | null
@@ -3745,6 +3756,7 @@ export type Database = {
           slug: string | null
         }
         Insert: {
+          image?: never
           listing_count?: never
           market_tier?: Database["public"]["Enums"]["market_tier"] | null
           name?: string | null
@@ -3756,6 +3768,7 @@ export type Database = {
           slug?: string | null
         }
         Update: {
+          image?: never
           listing_count?: never
           market_tier?: Database["public"]["Enums"]["market_tier"] | null
           name?: string | null
@@ -3772,6 +3785,7 @@ export type Database = {
         Row: {
           body: string | null
           h1: string | null
+          image: Json | null
           intro: string | null
           kind: string | null
           meta_description: string | null
@@ -3781,6 +3795,7 @@ export type Database = {
         Insert: {
           body?: string | null
           h1?: string | null
+          image?: never
           intro?: string | null
           kind?: string | null
           meta_description?: string | null
@@ -3790,6 +3805,7 @@ export type Database = {
         Update: {
           body?: string | null
           h1?: string | null
+          image?: never
           intro?: string | null
           kind?: string | null
           meta_description?: string | null

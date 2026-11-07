@@ -1,5 +1,6 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { groupsFor, LISTING_TYPES, type Field } from "@/lib/property-fields";
 import { label } from "@/lib/format";
@@ -15,6 +16,8 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
   values: Record<string, unknown>; options: FormOptions; featureIds: string[]; isAdmin: boolean; cancelHref: string;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveProperty, {});
+  const router = useRouter();
+  useEffect(() => { if (state.next) router.push(state.next); }, [state.next, router]);
   const [type, setType] = useState(String(values.property_type ?? "apartment"));
   const [dev, setDev] = useState(String(values.development_id ?? ""));
   const v = (n: string) => values[n];

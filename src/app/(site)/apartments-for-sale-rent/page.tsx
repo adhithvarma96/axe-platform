@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { allListings, developments, locations, sitePage } from "@/lib/site/data";
-import { Banner, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../place";
+import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../place";
 
 const PATH = "/apartments-for-sale-rent/";
 type Props = { searchParams: Promise<{ intent?: string }> };
@@ -35,7 +35,8 @@ const LIFESTYLES = [
 
 async function Hub({ searchParams }: Props) {
   const intent = (await searchParams).intent;
-  const [page, all, locs, devs] = await Promise.all([sitePage(PATH), allListings(), locations(), developments()]);
+  const [page, all, locs, devs, ...lifePages] = await Promise.all([sitePage(PATH), allListings(), locations(), developments(),
+    ...LIFESTYLES.map(([f]) => sitePage(`/lifestyle/${f}-apartments-for-sale-rent/`))]);
   const apartments = all.filter((l) => l.property_type === "apartment");
   const rentN = apartments.filter((l) => (l.listing_types ?? []).some((t) => t.startsWith("rent"))).length;
   const saleN = apartments.filter((l) => (l.listing_types ?? []).includes("sale")).length;
@@ -62,7 +63,7 @@ async function Hub({ searchParams }: Props) {
       <section className="section section-alt">
         <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <h2 className="h2">Browse by Lifestyle</h2>
-          <Tiles items={LIFESTYLES.map(([f, n]) => ({ href: `/lifestyle/${f}-apartments-for-sale-rent/`, name: n, img: coverOf(all.filter((l) => (l.features ?? []).includes(f))) }))} />
+          <Tiles items={LIFESTYLES.map(([f, n]) => ({ href: `/lifestyle/${f}-apartments-for-sale-rent/`, name: n, img: chosen(lifePages[LIFESTYLES.findIndex((x) => x[0] === f)]?.image) ?? coverOf(all.filter((l) => (l.features ?? []).includes(f))) }))} />
         </div>
       </section>
       <section className="wrap" style={{ paddingTop: 64, paddingBottom: 32, display: "flex", flexDirection: "column", gap: 18 }}>

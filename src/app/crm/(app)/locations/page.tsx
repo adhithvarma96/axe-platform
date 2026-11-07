@@ -41,7 +41,7 @@ async function LocList() {
           <tbody>
             {(rows ?? []).map((l) => (
               <tr key={l.id}>
-                <td style={{ fontWeight: 600, color: "var(--ink)" }}>{l.name}</td>
+                <td><Link href={`/locations/${l.id}`} style={{ fontWeight: 600 }}>{l.name}</Link></td>
                 <td>{l.province?.name ?? ""}</td>
                 <td>{l.postal_code ?? ""}</td>
                 <td>{label(l.market_tier)}</td>

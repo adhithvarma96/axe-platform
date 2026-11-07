@@ -536,3 +536,18 @@ describe("public website allow-list", () => {
     expect(off.rows[0].g).toBeNull();
   });
 });
+
+describe("website property types", () => {
+  it("shows only apartments until the setting allows other types", async () => {
+    await db.query(
+      `insert into public.properties (property_type, status, listing_types, asking_sale_price, sale_currency, website_published, listing_no, seq_no)
+       values ('house', 'available', '{sale}', 90000000, 'LKR', true, 'AXH-TEST-1', 99001)`,
+    );
+    const before = await as(db, ANON, () => db.query("select 1 from public.web_listings where listing_no = 'AXH-TEST-1'"));
+    expect(before.rows).toHaveLength(0);
+    await db.query(`update public.settings set value = '["apartment","house"]' where key = 'website_property_types'`);
+    const after = await as(db, ANON, () => db.query("select 1 from public.web_listings where listing_no = 'AXH-TEST-1'"));
+    expect(after.rows).toHaveLength(1);
+    await db.query(`update public.settings set value = '["apartment"]' where key = 'website_property_types'`);
+  });
+});

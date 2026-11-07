@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label, priceLines } from "@/lib/format";
+import { WebsiteImage } from "../../website-image";
 
 export default function DevelopmentPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -44,6 +45,11 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
           <h2 className="section-title">Details</h2>
           <dl className="facts">{facts.filter(([, v]) => v).map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
           {d.notes && <p style={{ marginTop: 12, whiteSpace: "pre-line" }}>{d.notes}</p>}
+        </section>
+        <section className="panel">
+          <h2 className="section-title">Website image</h2>
+          <WebsiteImage kind="development" id={d.id} url={(d.website_image as Record<string, { url: string }> | null)?.["800"]?.url ?? null}
+            hint="A photo of the building itself. Used on its tile on the home page and hub." />
         </section>
         <section className="panel">
           <h2 className="section-title">Towers ({d.towers?.length ?? 0})</h2>

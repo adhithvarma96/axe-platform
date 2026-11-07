@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { allListings, developments, locations, sizes } from "@/lib/site/data";
+import { allListings, developments, locations, sitePage, sizes } from "@/lib/site/data";
 import { SITE } from "@/lib/site/listing";
 import { ListingCard, SiteHeader } from "./components";
-import { coverOf, Tiles } from "./place";
+import { chosen, coverOf, Tiles } from "./place";
 
 export const metadata: Metadata = {
   title: { absolute: "Apartments for Sale & Rent in Colombo | Axe Realty" },
@@ -30,12 +30,15 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const [all, locs, devs] = await Promise.all([allListings(), locations(), developments()]);
-  const hero = all.map((l) => sizes(l.cover)["2048"] ?? sizes(l.cover)["1600"]).find(Boolean);
+  const [all, locs, devs, home, ...lifePages] = await Promise.all([allListings(), locations(), developments(), sitePage("/"),
+    ...LIFESTYLES.map(([f]) => sitePage(`/lifestyle/${f}-apartments-for-sale-rent/`))]);
+  // Hero: the image chosen in the app (Website page), else the newest listing's cover.
+  const heroChosen = sizes(home?.image)["2048"] ?? sizes(home?.image)["1600"];
+  const hero = heroChosen ?? all.map((l) => sizes(l.cover)["2048"] ?? sizes(l.cover)["1600"]).find(Boolean);
   const featured = all.slice(0, 8);
   return (
     <>
-      <section style={{ position: "relative", background: "#2a2f37", minHeight: 680, display: "flex", flexDirection: "column" }}>
+      <section className="home-hero" style={{ position: "relative", background: "#2a2f37", display: "flex", flexDirection: "column" }}>
         {hero && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={hero.url} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} fetchPriority="high" />
@@ -89,7 +92,7 @@ async function HomeContent() {
             <span className="pill" style={{ background: "var(--red)", alignSelf: "flex-start" }}>Lifestyle</span>
             <h2 className="h2" style={{ color: "#fff" }}>Find Apartments by Lifestyle</h2>
           </div>
-          <Tiles items={LIFESTYLES.map(([f, n]) => ({ href: `/lifestyle/${f}-apartments-for-sale-rent/`, name: n, img: coverOf(all.filter((l) => (l.features ?? []).includes(f))) }))} />
+          <Tiles items={LIFESTYLES.map(([f, n]) => ({ href: `/lifestyle/${f}-apartments-for-sale-rent/`, name: n, img: chosen(lifePages[LIFESTYLES.findIndex((x) => x[0] === f)]?.image) ?? coverOf(all.filter((l) => (l.features ?? []).includes(f))) }))} />
         </div>
       </section>
 
@@ -99,7 +102,7 @@ async function HomeContent() {
             <h2 className="h2">Explore Apartments by Location</h2>
             <p>Discover handpicked listings across Colombo&apos;s most desirable neighbourhoods:</p>
           </div>
-          <Tiles items={locs.map((l) => ({ href: `/location/${l.slug}/`, name: l.name ?? "", img: coverOf(all.filter((x) => x.location_slug === l.slug)) }))} />
+          <Tiles items={locs.map((l) => ({ href: `/location/${l.slug}/`, name: l.name ?? "", img: chosen(l.image) ?? coverOf(all.filter((x) => x.location_slug === l.slug)) }))} />
         </div>
       </section>
 
@@ -132,7 +135,7 @@ async function HomeContent() {
             <h2 className="h2">Find Apartments in Colombo&apos;s Leading Developments</h2>
             <p>Looking for something specific? Start with the most sought-after apartment buildings in Colombo:</p>
           </div>
-          <Tiles items={devs.map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: coverOf(all.filter((l) => l.development_slug === d.slug)) }))} />
+          <Tiles items={devs.map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: chosen(d.image) ?? coverOf(all.filter((l) => l.development_slug === d.slug)) }))} />
         </div>
       </section>
 

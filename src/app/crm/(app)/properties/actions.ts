@@ -1,11 +1,10 @@
 "use server";
 import { refresh } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseProperty } from "@/lib/property-fields";
 
-export type FormState = { error?: string };
+export type FormState = { error?: string; next?: string };
 
 /** Create or update a property. Permissions are enforced by the database (RLS + triggers). */
 export async function saveProperty(_prev: FormState, form: FormData): Promise<FormState> {
@@ -46,7 +45,7 @@ export async function saveProperty(_prev: FormState, form: FormData): Promise<Fo
     const { error } = await supabase.from("property_feature_links").insert(features.map((feature_id) => ({ property_id: propertyId!, feature_id })));
     if (error) return { error: friendly(error.message) };
   }
-  redirect(`/properties/${listingNo}`);
+  return { next: `/properties/${listingNo}` }; // the form navigates there (see login/actions.ts)
 }
 
 function friendly(msg: string): string {
@@ -63,10 +62,15 @@ export async function setPublished(propertyId: string, publish: boolean): Promis
   if (publish) {
     const { data: p } = await supabase
       .from("properties")
-      .select("status, asking_rent, asking_sale_price, price_on_request, listing_types, property_photos(id, is_public, deleted_at)")
+      .select("status, property_type, asking_rent, asking_sale_price, price_on_request, listing_types, property_photos(id, is_public, deleted_at)")
       .eq("id", propertyId)
       .maybeSingle();
     if (!p) return { error: "Property not found." };
+    const { data: setting } = await supabase.from("settings").select("value").eq("key", "website_property_types").maybeSingle();
+    const allowed = (setting?.value as string[] | null) ?? ["apartment"];
+    if (!allowed.includes(p.property_type)) {
+      return { error: `Only ${allowed.join(", ")} listings can go on the website for now. (Change "website_property_types" in Settings to open other types.)` };
+    }
     const missing: string[] = [];
     if (!["available", "reserved"].includes(p.status)) missing.push("status must be Available or Reserved");
     if (!p.listing_types?.length) missing.push("choose rent and/or sale");
