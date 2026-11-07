@@ -83,14 +83,24 @@ if (error) throw error;
 console.log(`${APPLY ? "Importing" : "Dry run:"} ${props!.length} listings with a Drive link`);
 
 const totals = { listings: 0, folders_unreadable: 0, photos_found: 0, imported: 0, skipped: 0, failed: 0, bytes_in: 0, bytes_out: 0 };
-for (const p of props!) {
+// Signed in, Google's limits are generous: work on several listings at once, no pacing.
+// Anonymous (API key): one at a time with a pause between downloads.
+const CONCURRENCY = SA_FILE ? 4 : 1;
+const PACE_MS = SA_FILE ? 0 : 1200;
+let next = 0;
+async function worker() {
+  while (next < props!.length) await importListing(props![next++]);
+}
+await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+
+async function importListing(p: { id: string; listing_no: string; status: string; photos_link: string }) {
   const fid = folderId(p.photos_link);
-  if (!fid) { console.log(`  ${p.listing_no}: not a Drive folder link, skipped`); totals.folders_unreadable++; continue; }
+  if (!fid) { console.log(`  ${p.listing_no}: not a Drive folder link, skipped`); totals.folders_unreadable++; return; }
   let files: DriveFile[];
-  try { files = await listImages(fid); } catch (e) { console.log(`  ${p.listing_no}: ${(e as Error).message}`); totals.folders_unreadable++; continue; }
+  try { files = await listImages(fid); } catch (e) { console.log(`  ${p.listing_no}: ${(e as Error).message}`); totals.folders_unreadable++; return; }
   totals.listings++;
   totals.photos_found += files.length;
-  if (!APPLY) { console.log(`  ${p.listing_no} (${p.status}): ${files.length} photos`); continue; }
+  if (!APPLY) { console.log(`  ${p.listing_no} (${p.status}): ${files.length} photos`); return; }
 
   const { data: existing } = await db.from("property_photos").select("source_ref, content_hash, is_cover, sort_order").eq("property_id", p.id).is("deleted_at", null);
   const seenRefs = new Set((existing ?? []).map((e) => e.source_ref));
@@ -100,7 +110,7 @@ for (const p of props!) {
   let done = 0;
   for (const f of files) {
     if (seenRefs.has(f.id)) { totals.skipped++; continue; }
-    await new Promise((res) => setTimeout(res, 1200)); // pace downloads to stay under Google's burst limit
+    if (PACE_MS) await new Promise((res) => setTimeout(res, PACE_MS)); // anonymous only: stay under Google's burst limit
     try {
       const bytes = Buffer.from(await (await drive(`files/${f.id}`, { alt: "media" })).arrayBuffer());
       const photo = await processPhoto(bytes);
