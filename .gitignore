@@ -50,3 +50,6 @@ supabase/.branches/
 
 # Airtable import reports (may contain record names)
 migration-reports/
+
+# Local credential files (service account keys). Never commit.
+.secrets/

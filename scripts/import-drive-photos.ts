@@ -8,8 +8,11 @@
 //   ... --apply --only AX260369,AX260370                                       # just these listings
 //   ... --apply --status available,reserved                                    # only these statuses
 //
-// Needs GOOGLE_API_KEY (Drive API enabled; the folders are "anyone with the link").
+// Auth, in order of preference:
+//   GOOGLE_SERVICE_ACCOUNT_FILE=.secrets/google-service-account.json  (signed-in: normal Drive quotas)
+//   GOOGLE_API_KEY  (anonymous: works, but Google throttles bulk downloads hard)
 import { createClient } from "@supabase/supabase-js";
+import { GoogleAuth } from "google-auth-library";
 import { processPhoto } from "../src/lib/photos/pipeline.ts";
 import { photoStoreFromEnv, uploadPhoto } from "../src/lib/photos/storage.ts";
 
@@ -22,7 +25,15 @@ const PROD_REF = "divuqbipkxdofkyrbfxh";
 
 const env = (k: string) => { const v = process.env[k]; if (!v) throw new Error(`Missing ${k}`); return v; };
 if (APPLY && env("NEXT_PUBLIC_SUPABASE_URL").includes(PROD_REF) && !args.includes("--production")) throw new Error("Target is PRODUCTION. Pass --production to confirm.");
-const KEY = env("GOOGLE_API_KEY");
+const SA_FILE = process.env.GOOGLE_SERVICE_ACCOUNT_FILE;
+const KEY = SA_FILE ? undefined : env("GOOGLE_API_KEY");
+const gauth = SA_FILE ? new GoogleAuth({ keyFile: SA_FILE, scopes: ["https://www.googleapis.com/auth/drive.readonly"] }) : null;
+async function authHeader(): Promise<Record<string, string>> {
+  if (!gauth) return {};
+  const token = await (await gauth.getClient()).getAccessToken();
+  return { Authorization: `Bearer ${token.token}` };
+}
+console.log(`Google Drive auth: ${SA_FILE ? "service account" : "API key (anonymous)"}`);
 const db = createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), { auth: { persistSession: false } });
 const store = APPLY ? photoStoreFromEnv() : null;
 
@@ -31,13 +42,13 @@ const folderId = (url: string) => url.match(/\/folders\/([A-Za-z0-9_-]{10,})/)?.
 
 interface DriveFile { id: string; name: string; mimeType: string; size?: string; createdTime?: string }
 async function drive(path: string, params: Record<string, string>) {
-  const qs = new URLSearchParams({ ...params, key: KEY, supportsAllDrives: "true", includeItemsFromAllDrives: "true" });
+  const qs = new URLSearchParams({ ...params, ...(KEY ? { key: KEY } : {}), supportsAllDrives: "true", includeItemsFromAllDrives: "true" });
   // Google throttles bursts of downloads with a 403 "Sorry..." page or rate-limit errors:
   // back off 30s, 60s, 120s, 240s and retry; any other 4xx is a real error.
   const waits = [0, 30_000, 60_000, 120_000, 240_000];
   for (let attempt = 0; attempt < waits.length; attempt++) {
     if (waits[attempt]) { console.log(`    (Google is throttling; waiting ${waits[attempt] / 1000}s)`); await new Promise((res) => setTimeout(res, waits[attempt])); }
-    const r = await fetch(`https://www.googleapis.com/drive/v3/${path}?${qs}`);
+    const r = await fetch(`https://www.googleapis.com/drive/v3/${path}?${qs}`, { headers: await authHeader() });
     if (r.ok) return r;
     const body = await r.text();
     const throttled = r.status === 429 || r.status >= 500 || (r.status === 403 && /Sorry|rateLimit|userRateLimit|automated/i.test(body));
