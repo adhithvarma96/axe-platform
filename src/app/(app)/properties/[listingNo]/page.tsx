@@ -5,6 +5,8 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { date, label, money, priceLines } from "@/lib/format";
+import { PhotoManager } from "./photo-manager";
+import { PublishSwitch } from "./publish-switch";
 
 type Variants = Record<string, { url: string; width: number; height: number }>;
 
@@ -45,14 +47,14 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
        referral_partner:referral_partners(full_name),
        source_channel:source_channels(name),
        features:property_feature_links(feature:property_features(name)),
-       photos:property_photos(id, variants, is_cover, sort_order, original_filename)`,
+       photos:property_photos(id, variants, is_cover, is_public, sort_order, original_filename, deleted_at)`,
     )
     .eq("listing_no", decodeURIComponent(listingNo).toUpperCase())
     .is("deleted_at", null)
     .maybeSingle();
   if (!p) notFound();
 
-  const photos = (p.photos ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const photos = (p.photos ?? []).filter((ph) => !ph.deleted_at).sort((a, b) => a.sort_order - b.sort_order);
   const { data: history } = await supabase
     .from("price_history")
     .select("field, old_amount, old_currency, new_amount, new_currency, changed_at")
@@ -74,32 +76,20 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
             {[label(p.property_type), p.location?.name, p.beds != null ? `${p.beds} bed` : null, p.square_feet ? `${Math.round(p.square_feet).toLocaleString()} sq ft` : null].filter(Boolean).join(" · ")}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span className={`badge badge-${p.status}`}>{label(p.status)}</span>
-          <span className={`badge ${p.website_published ? "badge-live" : ""}`}>{p.website_published ? "On website" : "Not on website"}</span>
+          <Link className="btn btn-ghost btn-sm" href={`/properties/${p.listing_no}/edit`}>Edit</Link>
+          <PublishSwitch propertyId={p.id} published={p.website_published} />
         </div>
       </div>
 
-      <section className="panel">
-        <h2 className="section-title">Photos ({photos.length})</h2>
-        {photos.length ? (
-          <div className="gallery">
-            {photos.map((ph, i) => {
-              const v = ph.variants as Variants | null;
-              return (
-                <figure key={ph.id} style={{ margin: 0, position: "relative" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={v?.["400"]?.url} alt={`Photo ${i + 1} of ${p.listing_no}`} loading="lazy" />
-                  {ph.is_cover && <span className="badge badge-live" style={{ position: "absolute", top: 6, left: 6 }}>Cover</span>}
-                </figure>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="muted">No photos yet.{p.photos_link ? " They can be imported from the Drive folder." : ""}</p>
-        )}
-        {p.photos_link && <p style={{ marginTop: 10, fontSize: 13 }}><a href={p.photos_link} target="_blank" rel="noreferrer">Open Drive folder ↗</a></p>}
-      </section>
+      <PhotoManager
+        propertyId={p.id}
+        listingNo={p.listing_no ?? ""}
+        isAdmin={user.role === "super_admin"}
+        photos={photos.map((ph) => ({ id: ph.id, url: (ph.variants as Variants | null)?.["400"]?.url ?? "", isCover: ph.is_cover, isPublic: ph.is_public }))}
+      />
+      {p.photos_link && <p style={{ marginTop: -8, fontSize: 13 }}><a href={p.photos_link} target="_blank" rel="noreferrer">Open Drive photo folder ↗</a></p>}
 
       <div className="grid-2">
         <section className="panel">
@@ -221,7 +211,6 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
           {p.map_pin && <p style={{ marginTop: 10, fontSize: 13 }}><a href={p.map_pin} target="_blank" rel="noreferrer">Map pin ↗</a> <span className="muted">(internal only)</span></p>}
         </section>
       </div>
-      {user.role === "super_admin" && <p className="muted" style={{ fontSize: 12 }}>Editing, photo upload and the publish switch come in the next step.</p>}
     </>
   );
 }

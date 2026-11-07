@@ -20,6 +20,7 @@ export default function PropertiesPage({ searchParams }: { searchParams: Promise
           <h1>Properties</h1>
           <p className="muted">Every listing in the database. Click a row to open it.</p>
         </div>
+        <Link className="btn" href="/properties/new">+ Add property</Link>
       </div>
       <Suspense fallback={<p className="muted">Loading properties…</p>}>
         <PropertyList searchParams={searchParams} />
