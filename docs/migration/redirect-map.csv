@@ -1,0 +1,145 @@
+old_path,action,new_path,note
+/development/447-luna-tower-apartments-for-sale-rent/,keep,/development/447-luna-tower-apartments-for-sale-rent/,fix: no single H1 today
+/development/606-the-address-apartments-for-sale-rent/,keep,/development/606-the-address-apartments-for-sale-rent/,fix: no single H1 today
+/development/altair-apartments-for-sale-rent/,keep,/development/altair-apartments-for-sale-rent/,fix: no single H1 today
+/development/astoria-apartment-for-sale-rent/,301,/development/astoria-apartments-for-sale-rent/,
+/development/capital-heights-apartments-for-sale-rent/,keep,/development/capital-heights-apartments-for-sale-rent/,fix: no single H1 today
+/development/capitol-twin-peaks-apartments-for-sale-rent/,keep,/development/capitol-twin-peaks-apartments-for-sale-rent/,fix: no single H1 today
+/development/cinnamon-life-apartments-for-sale-rent/,keep,/development/cinnamon-life-apartments-for-sale-rent/,
+/development/clearpoint-residencies-apartments-for-sale-rent/,keep,/development/clearpoint-residencies-apartments-for-sale-rent/,fix: no single H1 today
+/development/colombo-city-centre-apartments-for-sale-rent/,keep,/development/colombo-city-centre-apartments-for-sale-rent/,
+/development/emperor-apartments-for-rent-sale/,301,/development/emperor-apartments-for-sale-rent/,
+/development/empire-apartment-for-rent-sale/,301,/development/empire-apartments-for-sale-rent/,
+/development/havelock-city-apartments-for-rent-sale/,301,/development/havelock-city-apartments-for-sale-rent/,
+/development/iconic-galaxy-apartments-for-rent-sale/,301,/development/iconic-galaxy-apartments-for-sale-rent/,
+/development/monarch-apartments-apartments-for-rent-sale/,301,/development/monarch-apartments-for-sale-rent/,
+/development/on320-apartment-for-sale-rent/,301,/development/on320-apartments-for-sale-rent/,
+/development/prime-grand-apartments-for-rent-sale/,301,/development/prime-grand-apartments-for-sale-rent/,
+/development/shangri-la-colombo-apartments-for-sale-rent/,keep,/development/shangri-la-colombo-apartments-for-sale-rent/,
+/development/tri-zen-apartments-for-sale-rent/,keep,/development/tri-zen-apartments-for-sale-rent/,
+/facility/air-conditioning/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/brand-new/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/cctv/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/direct-sea-view/,301,/lifestyle/sea-view-apartments-for-sale-rent/,
+/facility/full-equipped-kitchen/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/fully-furnished/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/garden/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/generator/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/gym/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/maids-bathroom/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/maids-room/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/parking/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/partial-sea-view/,301,/lifestyle/sea-view-apartments-for-sale-rent/,
+/facility/pet-friendly-2/,301,/lifestyle/pet-friendly-apartments-for-sale-rent/,
+/facility/restaurant/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/semi-furnished/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/swimming-pool/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/unfurnished/,301,/apartments-for-sale-rent/,facility pages retired
+/facility/unobstructed-view/,301,/apartments-for-sale-rent/,facility pages retired
+/lifestyle/duplex-apartments-for-sale-rent-colombo/,301,/lifestyle/duplex-apartments-for-sale-rent/,
+/lifestyle/penthouses-in-colombo-for-sale-rent/,301,/lifestyle/penthouse-apartments-for-sale-rent/,
+/lifestyle/pet-friendly-apartments-in-colombo-for-sale-rent/,301,/lifestyle/pet-friendly-apartments-for-sale-rent/,
+/location/battaramulla-apartments-for-sale-rent/,keep,/location/battaramulla-apartments-for-sale-rent/,
+/location/colombo-02-apartments-for-sale-rent/,keep,/location/colombo-02-apartments-for-sale-rent/,
+/location/colombo-03-apartments-for-sale-rent/,keep,/location/colombo-03-apartments-for-sale-rent/,
+/location/colombo-04-apartments-for-sale-rent/,keep,/location/colombo-04-apartments-for-sale-rent/,
+/location/colombo-05-apartments-for-sale-rent/,keep,/location/colombo-05-apartments-for-sale-rent/,
+/location/colombo-07-apartments-for-sale-rent/,keep,/location/colombo-07-apartments-for-sale-rent/,
+/location/colombo-08-apartments-for-sale-rent/,keep,/location/colombo-08-apartments-for-sale-rent/,
+/location/mount-lavinia-apartments-for-sale-rent/,keep,/location/mount-lavinia-apartments-for-sale-rent/,
+/location/nawala-apartments-for-sale-rent/,keep,/location/nawala-apartments-for-sale-rent/,
+/location/rajagiriya-apartments-for-sale-rent/,keep,/location/rajagiriya-apartments-for-sale-rent/,
+/,keep,/,
+/about-us/,keep,/about-us/,fix: no single H1 today
+/colombo-apartment-report/,keep,/colombo-apartment-report/,
+/contact-us/,keep,/contact-us/,fix: no single H1 today
+/list-your-property/,keep,/list-your-property/,fix: no single H1 today
+/privacy-policy/,keep,/privacy-policy/,fix: no single H1 today
+/properties/,keep,/properties/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25001-cornwall-residencies/,keep,/property/ax25001-cornwall-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25035-cornwall-residencies/,keep,/property/ax25035-cornwall-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25045-cinnamon-life-apartment/,keep,/property/ax25045-cinnamon-life-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25047-cinnamon-life-apartment/,keep,/property/ax25047-cinnamon-life-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25063-bullers-lane-residencies/,keep,/property/ax25063-bullers-lane-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25071-havelock-city-apartment/,keep,/property/ax25071-havelock-city-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25072-havelock-city-apartment/,keep,/property/ax25072-havelock-city-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25073-havelock-city-apartment/,keep,/property/ax25073-havelock-city-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25074-havelock-city-apartment/,keep,/property/ax25074-havelock-city-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25079-cinnamon-life-apartment/,keep,/property/ax25079-cinnamon-life-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25082-cinnamon-life-apartment/,keep,/property/ax25082-cinnamon-life-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25106-on320-residencies/,keep,/property/ax25106-on320-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25108-colombo-city-center-residencies/,keep,/property/ax25108-colombo-city-center-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25109-glenarvon-apartment/,keep,/property/ax25109-glenarvon-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25119-luna-tower-apartment/,keep,/property/ax25119-luna-tower-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25120-luna-tower-apartment/,keep,/property/ax25120-luna-tower-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25127-flemington-apartment/,keep,/property/ax25127-flemington-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25131-trillium-residencies/,keep,/property/ax25131-trillium-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25132-7th-sense-apartment/,keep,/property/ax25132-7th-sense-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25133-cinnamon-life-apartment/,keep,/property/ax25133-cinnamon-life-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25134-luna-tower-apartment/,keep,/property/ax25134-luna-tower-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25135-luna-tower-apartment/,keep,/property/ax25135-luna-tower-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25136-prime-grand-apartment/,keep,/property/ax25136-prime-grand-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25138-park-heights-apartment/,keep,/property/ax25138-park-heights-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25139-park-heights-apartment/,keep,/property/ax25139-park-heights-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25140-iconic-galaxy-apartment/,keep,/property/ax25140-iconic-galaxy-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25141-luna-tower-apartment/,keep,/property/ax25141-luna-tower-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25142-on320-residencies/,keep,/property/ax25142-on320-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25143-empire-residencies/,keep,/property/ax25143-empire-residencies/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25144-shangri-la-apartment/,keep,/property/ax25144-shangri-la-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25145-shangri-la-apartment/,keep,/property/ax25145-shangri-la-apartment/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ax25177-trizen-colombo-02/,keep,/property/ax25177-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-25187-606-the-address-colombo-03/,keep,/property/ref-25187-606-the-address-colombo-03/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25188-emperor-residencies-colombo-03/,keep,/property/ref-25188-emperor-residencies-colombo-03/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25189-reliance-residencies-battaramulla/,keep,/property/ref-25189-reliance-residencies-battaramulla/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25190-castle-residencies-colombo-08/,keep,/property/ref-25190-castle-residencies-colombo-08/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25191-43-by-the-sea-by-prime-residencies-dehiwala-mt-lavinia/,keep,/property/ref-25191-43-by-the-sea-by-prime-residencies-dehiwala-mt-lavinia/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25192-monarch-residencies-colombo-03/,keep,/property/ref-25192-monarch-residencies-colombo-03/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25193-clearpoint-residencies-rajagiriya/,keep,/property/ref-25193-clearpoint-residencies-rajagiriya/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25194-prime-aqua-nawala/,keep,/property/ref-25194-prime-aqua-nawala/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25195-altair-colombo-02/,keep,/property/ref-25195-altair-colombo-02/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25196-trizen-colombo-02/,keep,/property/ref-25196-trizen-colombo-02/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25197-trizen-colombo-02/,keep,/property/ref-25197-trizen-colombo-02/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-25198-606-the-address-colombo-03/,keep,/property/ref-25198-606-the-address-colombo-03/,ref-style slug (Make.com); keep as-is; fix: no single H1 today
+/property/ref-ax25038-447-luna-tower-colombo-02/,keep,/property/ref-ax25038-447-luna-tower-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25041-capitol-twin-peaks-colombo-02/,keep,/property/ref-ax25041-capitol-twin-peaks-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25117-cinnamon-life-colombo-02/,keep,/property/ref-ax25117-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25125-glen-residencies-colombo-03/,keep,/property/ref-ax25125-glen-residencies-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25150-altair-colombo-02/,keep,/property/ref-ax25150-altair-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25151-shangrila-colombo-02/,keep,/property/ref-ax25151-shangrila-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25152-prime-grand-colombo-07/,keep,/property/ref-ax25152-prime-grand-colombo-07/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25155-cinnamon-life-colombo-02/,keep,/property/ref-ax25155-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25159-altair-colombo-02/,keep,/property/ref-ax25159-altair-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25162-capitol-twin-peaks-colombo-02/,keep,/property/ref-ax25162-capitol-twin-peaks-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25166-trizen-colombo-02/,keep,/property/ref-ax25166-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25167-trizen-colombo-02/,keep,/property/ref-ax25167-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25174-altair-colombo-02/,keep,/property/ref-ax25174-altair-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25175-trizen-colombo-02/,keep,/property/ref-ax25175-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25176-trizen-colombo-02/,keep,/property/ref-ax25176-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25178-trizen-colombo-02/,keep,/property/ref-ax25178-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25179-trizen-colombo-02/,keep,/property/ref-ax25179-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25180-trizen-colombo-02/,keep,/property/ref-ax25180-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25181-trizen-colombo-02/,keep,/property/ref-ax25181-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25182-trizen-colombo-02/,keep,/property/ref-ax25182-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25183-trizen-colombo-02/,keep,/property/ref-ax25183-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25184-trizen-colombo-02/,keep,/property/ref-ax25184-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25185-cinnamon-life-colombo-02/,keep,/property/ref-ax25185-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25186-cinnamon-life-colombo-02/,keep,/property/ref-ax25186-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25199-cinnamon-life-colombo-02/,keep,/property/ref-ax25199-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25200-cinnamon-life-colombo-02/,keep,/property/ref-ax25200-cinnamon-life-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25201-green-lands-residencies-colombo-03/,keep,/property/ref-ax25201-green-lands-residencies-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25202-606-the-address-colombo-03/,keep,/property/ref-ax25202-606-the-address-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25203-ccc-colombo-02/,keep,/property/ref-ax25203-ccc-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25204-trizen-colombo-02/,keep,/property/ref-ax25204-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax252042-capitol-twin-peaks-colombo-02/,keep,/property/ref-ax252042-capitol-twin-peaks-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25205-trizen-colombo-02/,keep,/property/ref-ax25205-trizen-colombo-02/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25206-orwell-colombo-03/,keep,/property/ref-ax25206-orwell-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25207-astoria-colombo-03/,keep,/property/ref-ax25207-astoria-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25208-iconic-galaxy-rajagiriya/,keep,/property/ref-ax25208-iconic-galaxy-rajagiriya/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax25209-monarch-apartments-colombo-03/,keep,/property/ref-ax25209-monarch-apartments-colombo-03/,ax-style slug; keep as-is; fix: no single H1 today
+/property/ref-ax260042-capital-heights-rajagiriya/,keep,/property/ref-ax260042-capital-heights-rajagiriya/,ax-style slug; keep as-is; fix: no single H1 today
+/property-type/for-rent/,301,/apartments-for-rent/,
+/property-type/for-sale/,301,/apartments-for-sale/,
+/apartments-for-rent/,new page,/apartments-for-rent/,today 301s to /property-type/for-rent/; reverses
+/apartments-for-sale/,new page,/apartments-for-sale/,today 301s to /property-type/for-sale/; reverses
+/apartments-for-sale-rent/,new page,/apartments-for-sale-rent/,new category hub (404 today)
+/lifestyle/sea-view-apartments-for-sale-rent/,new page,/lifestyle/sea-view-apartments-for-sale-rent/,new lifestyle page
