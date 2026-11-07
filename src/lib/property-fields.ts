@@ -12,6 +12,8 @@ export interface Field {
   required?: boolean;
   help?: string;
   adminOnly?: boolean;
+  /** Not shown when adding a new listing (legacy fields kept only for existing ones). */
+  existingOnly?: boolean;
 }
 export interface Group {
   id: string;
@@ -159,8 +161,8 @@ export const GROUPS: Group[] = [
       { name: "public_notes", label: "Public notes", kind: "textarea", help: "The only free text that can appear on the website. No unit numbers, owner names or deal details." },
       { name: "internal_notes", label: "Internal notes", kind: "textarea" },
       { name: "map_pin", label: "Map pin", kind: "url", help: "Internal only" },
-      { name: "photos_link", label: "Photos folder (Google Drive)", kind: "url" },
-      { name: "customer_photo_link", label: "Client gallery link", kind: "url" },
+      { name: "photos_link", label: "Old Drive folder (imported)", kind: "url", existingOnly: true, help: "Photos are now uploaded directly. This goes once every listing's photos are copied over." },
+      { name: "customer_photo_link", label: "Old client photo link", kind: "url", existingOnly: true, help: "Replaced by the gallery link in the WhatsApp share" },
     ],
   },
   {
@@ -191,6 +193,7 @@ export function parseProperty(form: FormData, isAdmin: boolean): Record<string, 
       if (seen.has(f.name)) continue;
       seen.add(f.name);
       if (f.adminOnly && !isAdmin) continue;
+      if (f.existingOnly && !form.get("id")) continue;
       const raw = form.get(f.name);
       const s = typeof raw === "string" ? raw.trim() : "";
       switch (f.kind) {

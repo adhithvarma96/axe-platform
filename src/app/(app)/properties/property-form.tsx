@@ -82,7 +82,7 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
         <fieldset key={g.id} className="panel form-group">
           <legend className="section-title">{g.title}</legend>
           <div className="form-grid">
-            {g.fields.map(input)}
+            {g.fields.filter((f) => values.id || !f.existingOnly).map(input)}
             {g.id === "basics" && (
               <div className="field" style={{ gridColumn: "1 / -1" }}>
                 <span className="flabel-sm">Listing for</span>
