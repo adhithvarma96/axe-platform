@@ -124,6 +124,19 @@ async function upsert(table, rows, key = "airtable_id") {
     }
   }
 }
+// Records deleted in Airtable are soft-deleted here (restorable by a Super Admin).
+async function softDeleteMissing(table, airtableIds) {
+  if (!APPLY) return;
+  const keep = new Set(airtableIds);
+  const { data, error } = await db.from(table).select("id, airtable_id").not("airtable_id", "is", null).is("deleted_at", null).limit(5000);
+  if (error) throw error;
+  const gone = data.filter((r) => !keep.has(r.airtable_id)).map((r) => r.id);
+  if (!gone.length) return;
+  const { error: e } = await db.from(table).update({ deleted_at: new Date().toISOString() }).in("id", gone);
+  if (e) problem(table, "-", `soft delete: ${e.message}`);
+  report.tables[table] = { ...(report.tables[table] ?? {}), deleted_in_airtable: gone.length };
+}
+
 async function idMap(table) {
   const map = new Map();
   if (!APPLY) return map;
@@ -389,6 +402,11 @@ await rebuildLinks("property_feature_links", "property_id", propIds, at.properti
 await rebuildLinks("property_source_external_agents", "property_id", propIds, at.properties.flatMap((r) =>
   (r.fields.fldASLliMJRXb8BSQ ?? []).filter((x) => extId.has(x) && propId.has(r.id)).map((x) => ({ property_id: propId.get(r.id), external_agent_id: extId.get(x) }))));
 
+for (const [table, key] of [["locations", "locations"], ["developments", "developments"], ["external_agents", "externalAgents"],
+  ["referral_partners", "referralPartners"], ["owners", "owners"], ["properties", "properties"]]) {
+  await softDeleteMissing(table, at[key].map((r) => r.id));
+}
+
 if (APPLY) {
   const { error } = await db.rpc("admin_sync_sequences");
   if (error) problem("sequences", "-", error.message);
@@ -401,7 +419,7 @@ const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 fs.mkdirSync("migration-reports", { recursive: true });
 fs.writeFileSync(`migration-reports/${stamp}-${report.target}-${report.mode}.json`, JSON.stringify(report, null, 2));
 console.log("\nTable                            Airtable  Written  Failed");
-for (const [t, s] of Object.entries(report.tables)) console.log(`  ${t.padEnd(31)} ${String(s.airtable).padStart(8)} ${String(s.written).padStart(8)} ${String(s.failed).padStart(7)}`);
+for (const [t, s] of Object.entries(report.tables)) console.log(`  ${t.padEnd(31)} ${String(s.airtable).padStart(8)} ${String(s.written).padStart(8)} ${String(s.failed).padStart(7)}${s.deleted_in_airtable ? `   (${s.deleted_in_airtable} deleted in Airtable -> soft-deleted)` : ""}`);
 const byMsg = {};
 report.problems.forEach((p) => { const k = `${p.table}: ${p.msg.replace(/"[^"]*"/, '"…"').replace(/AX\w+/g, "AX…")}`; byMsg[k] = (byMsg[k] || 0) + 1; });
 console.log(`\nProblems: ${report.problems.length}`);
