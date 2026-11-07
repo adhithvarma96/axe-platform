@@ -47,3 +47,6 @@ supabase/.branches/
 
 # local tool config
 .claude/
+
+# Airtable import reports (may contain record names)
+migration-reports/

@@ -450,3 +450,13 @@ describe("central USD/LKR rate", () => {
     );
   });
 });
+
+describe("import helpers", () => {
+  it("only the service role can move the record counters", async () => {
+    await refused(as(db, AGENT(), () => db.query("select public.admin_sync_sequences()")));
+    await refused(as(db, ADMIN(), () => db.query("select public.admin_sync_sequences()")));
+    await refused(as(db, ANON, () => db.query("select public.admin_sync_sequences()")));
+    await db.exec("set role service_role");
+    try { await db.query("select public.admin_sync_sequences()"); } finally { await db.exec("reset role"); }
+  });
+});
