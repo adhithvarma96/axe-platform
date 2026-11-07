@@ -2482,6 +2482,8 @@ export type Database = {
           foot_traffic: Database["public"]["Enums"]["traffic_level"] | null
           frontage_ft: number | null
           furnished: Database["public"]["Enums"]["furnishing"] | null
+          gallery_enabled: boolean
+          gallery_token: string
           garden: boolean | null
           garden_size_perches: number | null
           generator: boolean | null
@@ -2611,6 +2613,8 @@ export type Database = {
           foot_traffic?: Database["public"]["Enums"]["traffic_level"] | null
           frontage_ft?: number | null
           furnished?: Database["public"]["Enums"]["furnishing"] | null
+          gallery_enabled?: boolean
+          gallery_token?: string
           garden?: boolean | null
           garden_size_perches?: number | null
           generator?: boolean | null
@@ -2744,6 +2748,8 @@ export type Database = {
           foot_traffic?: Database["public"]["Enums"]["traffic_level"] | null
           frontage_ft?: number | null
           furnished?: Database["public"]["Enums"]["furnishing"] | null
+          gallery_enabled?: boolean
+          gallery_token?: string
           garden?: boolean | null
           garden_size_perches?: number | null
           generator?: boolean | null
@@ -3601,10 +3607,123 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      web_developments: {
+        Row: {
+          developer_builder: string | null
+          development_status:
+            | Database["public"]["Enums"]["development_status"]
+            | null
+          hero_image_path: string | null
+          listing_count: number | null
+          location_name: string | null
+          location_slug: string | null
+          name: string | null
+          seo_body: string | null
+          seo_faq: Json | null
+          seo_intro: string | null
+          seo_meta_description: string | null
+          seo_title: string | null
+          slug: string | null
+          year_completed: number | null
+        }
+        Relationships: []
+      }
+      web_fx: {
+        Row: {
+          rate_date: string | null
+          usd_lkr: number | null
+        }
+        Relationships: []
+      }
+      web_listings: {
+        Row: {
+          agent_name: string | null
+          agent_whatsapp: string | null
+          asking_rent: number | null
+          asking_sale_price: number | null
+          available_from: string | null
+          baths: number | null
+          beds: number | null
+          built_up_area_sqft: number | null
+          commercial_sub_category:
+            | Database["public"]["Enums"]["commercial_sub_category"]
+            | null
+          condition: Database["public"]["Enums"]["property_condition"] | null
+          cover: Json | null
+          development_name: string | null
+          development_slug: string | null
+          features: string[] | null
+          furnished: Database["public"]["Enums"]["furnishing"] | null
+          garden: boolean | null
+          land_extent_perches: number | null
+          listing_no: string | null
+          listing_types: Database["public"]["Enums"]["listing_type"][] | null
+          location_name: string | null
+          location_slug: string | null
+          market_tier: Database["public"]["Enums"]["market_tier"] | null
+          number_of_floors: number | null
+          parking: number | null
+          photos: Json | null
+          pool: boolean | null
+          price_on_request: boolean | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          public_notes: string | null
+          published_at: string | null
+          rent_currency: Database["public"]["Enums"]["currency"] | null
+          rent_lkr: number | null
+          rent_usd: number | null
+          sale_currency: Database["public"]["Enums"]["currency"] | null
+          sale_lkr: number | null
+          sale_usd: number | null
+          sea_view: boolean | null
+          slug: string | null
+          square_feet: number | null
+          status: Database["public"]["Enums"]["property_status"] | null
+          total_floor_area_sqft: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      web_locations: {
+        Row: {
+          listing_count: number | null
+          market_tier: Database["public"]["Enums"]["market_tier"] | null
+          name: string | null
+          seo_body: string | null
+          seo_faq: Json | null
+          seo_intro: string | null
+          seo_meta_description: string | null
+          seo_title: string | null
+          slug: string | null
+        }
+        Insert: {
+          listing_count?: never
+          market_tier?: Database["public"]["Enums"]["market_tier"] | null
+          name?: string | null
+          seo_body?: string | null
+          seo_faq?: Json | null
+          seo_intro?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+        }
+        Update: {
+          listing_count?: never
+          market_tier?: Database["public"]["Enums"]["market_tier"] | null
+          name?: string | null
+          seo_body?: string | null
+          seo_faq?: Json | null
+          seo_intro?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_sync_sequences: { Args: never; Returns: undefined }
+      web_gallery: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
       activity_type: "call" | "whatsapp" | "email" | "meeting" | "note"

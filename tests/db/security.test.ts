@@ -460,3 +460,79 @@ describe("import helpers", () => {
     try { await db.query("select public.admin_sync_sequences()"); } finally { await db.exec("reset role"); }
   });
 });
+
+describe("public website allow-list", () => {
+  const ALLOWED = [
+    "listing_no", "slug", "property_type", "status", "listing_types", "condition", "beds", "baths", "parking",
+    "square_feet", "furnished", "price_on_request", "asking_rent", "rent_currency", "asking_sale_price", "sale_currency",
+    "rent_usd", "rent_lkr", "sale_usd", "sale_lkr", "available_from", "public_notes", "land_extent_perches",
+    "built_up_area_sqft", "number_of_floors", "garden", "pool", "sea_view", "total_floor_area_sqft",
+    "commercial_sub_category", "location_name", "location_slug", "market_tier", "development_name",
+    "development_slug", "features", "cover", "photos", "agent_name", "agent_whatsapp", "published_at", "updated_at",
+  ].sort();
+  let pubId: string;
+
+  beforeAll(async () => {
+    const { rows } = await db.query<{ id: string }>(
+      `insert into public.properties (property_type, status, listing_types, beds, asking_rent, rent_currency, unit_number, floor,
+         commission_structure, internal_notes, map_pin, website_published, public_notes)
+       values ('apartment', 'available', '{rent_long_term}', 2, 2000, 'USD', '12A', '12', '1 month', 'owner is difficult',
+         'https://maps.example/x', true, 'Bright corner unit') returning id`,
+    );
+    pubId = rows[0].id;
+    await db.query(
+      `insert into public.property_photos (property_id, storage_path, source, source_ref, sort_order, is_cover, is_public, variants)
+       values ($1, 'p/x', 'upload', 'a', 0, true, true, '{"400":{"key":"properties/x/400.webp","url":"https://cdn/x/400.webp","width":400,"height":300,"bytes":9}}'),
+              ($1, 'p/y', 'upload', 'b', 1, false, false, '{"400":{"key":"properties/y/400.webp","url":"https://cdn/y/400.webp","width":400,"height":300,"bytes":9}}')`,
+      [pubId],
+    );
+    // an unpublished and a rented listing must not appear
+    await db.query("insert into public.properties (property_type, status, website_published) values ('apartment','available',false), ('apartment','rented',true)");
+  });
+
+  it("exposes exactly the allow-listed columns, nothing internal", async () => {
+    const { fields } = await as(db, ANON, () => db.query("select * from public.web_listings limit 1"));
+    expect(fields.map((f) => f.name).sort()).toEqual(ALLOWED);
+  });
+
+  it("shows only published Available/Reserved listings", async () => {
+    const { rows } = await as(db, ANON, () => db.query<{ listing_no: string }>("select listing_no from public.web_listings"));
+    expect(rows).toHaveLength(1);
+  });
+
+  it("never leaks internal values anywhere in the row, and hides private photos and storage keys", async () => {
+    const { rows } = await as(db, ANON, () => db.query("select * from public.web_listings"));
+    const text = JSON.stringify(rows[0]);
+    for (const secret of ["12A", "1 month", "owner is difficult", "maps.example", "properties/x/400.webp", "cdn/y/"]) {
+      expect(text, secret).not.toContain(secret);
+    }
+    expect(text).toContain("https://cdn/x/400.webp");
+  });
+
+  it("hides the price when Price on request is ticked", async () => {
+    await db.query("update public.properties set price_on_request = true where id = $1", [pubId]);
+    const { rows } = await as(db, ANON, () => db.query<{ asking_rent: string | null; rent_usd: string | null }>("select asking_rent, rent_usd from public.web_listings"));
+    expect(rows[0]).toEqual({ asking_rent: null, rent_usd: null });
+    await db.query("update public.properties set price_on_request = false where id = $1", [pubId]);
+  });
+
+  it("still denies the website every table", async () => {
+    for (const t of ["properties", "property_photos", "owners", "fx_rates"]) {
+      await refused(as(db, ANON, () => db.query(`select 1 from public.${t} limit 1`)));
+    }
+  });
+
+  it("opens a gallery only with the right token, and only while enabled", async () => {
+    const { rows } = await db.query<{ gallery_token: string }>("select gallery_token from public.properties where id = $1", [pubId]);
+    const token = rows[0].gallery_token;
+    expect(token).toMatch(/^[0-9a-f]{24}$/);
+    const ok = await as(db, ANON, () => db.query<{ g: { photos: unknown[]; listing_no: string } }>("select public.web_gallery($1) as g", [token]));
+    expect(ok.rows[0].g.photos).toHaveLength(1);
+    expect(JSON.stringify(ok.rows[0].g)).not.toMatch(/12A|1 month|owner is difficult/);
+    const wrong = await as(db, ANON, () => db.query<{ g: unknown }>("select public.web_gallery($1) as g", ["0".repeat(24)]));
+    expect(wrong.rows[0].g).toBeNull();
+    await db.query("update public.properties set gallery_enabled = false where id = $1", [pubId]);
+    const off = await as(db, ANON, () => db.query<{ g: unknown }>("select public.web_gallery($1) as g", [token]));
+    expect(off.rows[0].g).toBeNull();
+  });
+});
