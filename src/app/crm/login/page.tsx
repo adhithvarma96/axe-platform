@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { signIn, type SignInState } from "./actions";
 
 export default function LoginPage() {
@@ -23,6 +24,7 @@ export default function LoginPage() {
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
         </button>
+        <Link href="/login/forgot" className="muted" style={{ fontSize: 14 }}>Forgot password?</Link>
       </form>
     </main>
   );

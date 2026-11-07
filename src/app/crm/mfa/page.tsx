@@ -42,7 +42,9 @@ export default function MfaPage() {
     const { error } = await sb().auth.mfa.challengeAndVerify({ factorId: step.factorId, code: code.trim() });
     setBusy(false);
     if (error) return setError("That code didn't work. Check the time on your phone and try the newest code.");
-    router.replace("/");
+    // Back to where the person was heading (e.g. the password reset), own pages only.
+    const next = new URLSearchParams(window.location.search).get("next") ?? "/";
+    router.replace(next.startsWith("/") && !next.startsWith("//") ? next : "/");
     router.refresh();
   }
 
