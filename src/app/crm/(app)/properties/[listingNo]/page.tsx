@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { date, label, money, priceLines } from "@/lib/format";
 import { PhotoManager } from "./photo-manager";
 import { PublishSwitch } from "./publish-switch";
+import { SharePanel } from "./share-panel";
+import { ROLE_TITLE, whatsappWriteup } from "@/lib/whatsapp";
 
 type Variants = Record<string, { url: string; width: number; height: number }>;
 
@@ -43,7 +45,7 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
     .select(
       `*, development:developments(name), location:locations(name), tower:development_towers(name),
        owner:owners(id, name, primary_phone, whatsapp, email, contact_protocol, contact_notes),
-       listing_agent:agents!properties_listing_agent_id_fkey(full_name),
+       listing_agent:agents!properties_listing_agent_id_fkey(full_name, public_name, public_whatsapp, role, status),
        referral_partner:referral_partners(full_name),
        source_channel:source_channels(name),
        features:property_feature_links(feature:property_features(name)),
@@ -63,6 +65,16 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
     .limit(10);
   const features = (p.features ?? []).map((f) => f.feature?.name).filter(Boolean).join(", ");
   const t = p.property_type;
+  const visible = photos.filter((ph) => ph.is_public);
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://axerealty.lk").replace(/\/$/, "");
+  const galleryUrl = visible.length ? `${siteUrl}/g/${p.gallery_token}` : null;
+  const agent = p.listing_agent?.status === "active" ? p.listing_agent : null;
+  const writeup = whatsappWriteup(
+    { ...p, development: p.development?.name ?? null, tower: p.tower?.name ?? p.tower_name_legacy ?? null, location: p.location?.name ?? null,
+      features: (p.features ?? []).map((f) => f.feature?.name).filter((x): x is string => !!x) },
+    { galleryUrl: p.gallery_enabled ? galleryUrl : null,
+      contact: agent?.public_whatsapp ? { name: agent.public_name || agent.full_name, title: ROLE_TITLE[agent.role] ?? null, phone: agent.public_whatsapp } : null },
+  );
 
   return (
     <>
@@ -90,6 +102,15 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
         photos={photos.map((ph) => ({ id: ph.id, url: (ph.variants as Variants | null)?.["400"]?.url ?? "", isCover: ph.is_cover, isPublic: ph.is_public }))}
       />
       {p.photos_link && <p style={{ marginTop: -8, fontSize: 13 }}><a href={p.photos_link} target="_blank" rel="noreferrer">Open Drive photo folder ↗</a></p>}
+
+      <SharePanel
+        propertyId={p.id}
+        listingNo={p.listing_no ?? ""}
+        text={writeup}
+        hasCover={visible.length > 0}
+        galleryUrl={galleryUrl}
+        galleryEnabled={p.gallery_enabled}
+      />
 
       <div className="grid-2">
         <section className="panel">

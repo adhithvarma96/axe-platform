@@ -87,6 +87,16 @@ export async function setPublished(propertyId: string, publish: boolean): Promis
   return {};
 }
 
+/** Client photo link (/g/{token}) on or off, e.g. off once the unit is let or sold. */
+export async function setGalleryEnabled(propertyId: string, enabled: boolean): Promise<FormState> {
+  await requireUser();
+  const supabase = await createClient();
+  const { error } = await supabase.from("properties").update({ gallery_enabled: enabled }).eq("id", propertyId);
+  if (error) return { error: friendly(error.message) };
+  refresh();
+  return {};
+}
+
 // ---------------------------------------------------------------------------
 // Photo manager
 // ---------------------------------------------------------------------------
