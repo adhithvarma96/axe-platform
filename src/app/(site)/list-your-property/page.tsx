@@ -6,7 +6,7 @@ import { OwnerForm } from "../forms";
 import { Banner, Crumbs, SiteHeader } from "../place";
 
 export const metadata: Metadata = {
-  title: "List Your Apartment with Axe Realty",
+  title: { absolute: "List Your Apartment with Axe Realty" },
   description: "List your Colombo apartment with Axe Realty: professional marketing, priced from real transactions in your building, matched against live buyer and tenant demand. Free assessment.",
   alternates: { canonical: "/list-your-property/" },
 };

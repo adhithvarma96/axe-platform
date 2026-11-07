@@ -9,7 +9,7 @@ const PATH = "/colombo-apartment-report/";
 export async function generateMetadata(): Promise<Metadata> {
   const page = await sitePage(PATH);
   return {
-    title: { absolute: `${page?.title || "The Colombo Apartment Report"} — Axe Realty` },
+    title: { absolute: `${(page?.title || "The Colombo Apartment Report").replace(/\s*[—–-]\s*Axe Realty$/i, "")} - Axe Realty` },
     description: page?.meta_description ?? "What Colombo apartments actually rent for: area-level rental bands from completed lettings, free from Axe Realty.",
     alternates: { canonical: PATH },
   };
