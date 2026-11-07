@@ -45,7 +45,7 @@ export function PhotoManager({ propertyId, listingNo, photos, isAdmin }: { prope
       const body = new FormData();
       body.append("photo", small, f.name.replace(/\.(heic|heif|png|webp)$/i, ".jpg"));
       try {
-        const r = await fetch(`/api/properties/${propertyId}/photos`, { method: "POST", body });
+        const r = await fetch(`/api/properties/${propertyId}/photos/`, { method: "POST", body });
         const j = await r.json();
         if (!r.ok) failed.push(`${f.name}: ${j.error ?? r.status}`);
         else if (j.skipped) skipped++;

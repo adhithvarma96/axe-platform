@@ -3375,6 +3375,54 @@ export type Database = {
         }
         Relationships: []
       }
+      site_pages: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          h1: string | null
+          intro: string | null
+          kind: string
+          meta_description: string | null
+          path: string
+          source_url: string | null
+          title: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          h1?: string | null
+          intro?: string | null
+          kind: string
+          meta_description?: string | null
+          path: string
+          source_url?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          h1?: string | null
+          intro?: string | null
+          kind?: string
+          meta_description?: string | null
+          path?: string
+          source_url?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       source_channels: {
         Row: {
           applies_to_leads: boolean
@@ -3717,6 +3765,36 @@ export type Database = {
           seo_meta_description?: string | null
           seo_title?: string | null
           slug?: string | null
+        }
+        Relationships: []
+      }
+      web_pages: {
+        Row: {
+          body: string | null
+          h1: string | null
+          intro: string | null
+          kind: string | null
+          meta_description: string | null
+          path: string | null
+          title: string | null
+        }
+        Insert: {
+          body?: string | null
+          h1?: string | null
+          intro?: string | null
+          kind?: string | null
+          meta_description?: string | null
+          path?: string | null
+          title?: string | null
+        }
+        Update: {
+          body?: string | null
+          h1?: string | null
+          intro?: string | null
+          kind?: string | null
+          meta_description?: string | null
+          path?: string | null
+          title?: string | null
         }
         Relationships: []
       }

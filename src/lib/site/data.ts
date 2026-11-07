@@ -59,6 +59,15 @@ export async function developments(): Promise<WebDevelopment[]> {
   return data ?? [];
 }
 
+export type WebPage = Database["public"]["Views"]["web_pages"]["Row"];
+export async function sitePage(path: string): Promise<WebPage | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("pages");
+  const { data } = await db().from("web_pages").select("*").eq("path", path).maybeSingle();
+  return data ?? null;
+}
+
 export async function usdLkr(): Promise<number> {
   "use cache";
   cacheLife("hours");

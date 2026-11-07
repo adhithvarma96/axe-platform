@@ -24,7 +24,7 @@ async function resolveOld(slug: string): Promise<string | null> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const l = await listingBySlug(slug);
-  if (!l) return { title: "Property not found", robots: { index: false } };
+  if (!l) notFound(); // metadata is resolved before the page streams for crawlers, so they get a real 404
   const { price, per } = headlinePrice(l);
   const share = sizes(l.cover)["share"];
   const title = listingTitle(l);
@@ -104,7 +104,7 @@ async function Listing({ params }: Props) {
 
       <section className="wrap" style={{ paddingTop: 32, paddingBottom: 72, display: "flex", flexWrap: "wrap", gap: 40, alignItems: "flex-start" }}>
         <div style={{ flex: "999 1 560px", minWidth: 0, display: "flex", flexDirection: "column", gap: 32 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(120px, 100%), 1fr))", gap: 12 }}>
             {l.beds != null && <div className="fact"><b>{l.beds}</b><span>Bedrooms</span></div>}
             {l.baths != null && <div className="fact"><b>{l.baths}</b><span>Bathrooms</span></div>}
             {l.parking != null && <div className="fact"><b>{l.parking}</b><span>Parking</span></div>}

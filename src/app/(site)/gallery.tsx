@@ -51,7 +51,7 @@ export function Gallery({ photos, title, layout = "listing" }: { photos: Gallery
           })}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))", gap: 10 }}>
           {photos.map((_, i) => btn(i, { aspectRatio: "4 / 3" }))}
         </div>
       )}

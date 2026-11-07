@@ -5,7 +5,7 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/fx",
+      "path": "/api/cron/fx/",
       "schedule": "0 1 * * *"
     }
   ]

@@ -16,7 +16,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     title: "All Properties: Apartments for Sale & Rent in Colombo",
     description: "Search every Axe Realty listing in Colombo. Filter by area, development, bedrooms, price in LKR or USD, and lifestyle.",
     alternates: { canonical: "/properties/" },
-    robots: filtered ? { index: false, follow: true } : undefined,
+    ...(filtered ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
