@@ -23,7 +23,13 @@ jobs:
       - run: npm run lint
       # Runs every migration on a fresh Postgres and checks RLS, audit, IDs, roles.
       - run: npm test
+      # Website pages read the public listing views while building, so the build
+      # needs the staging address and publishable key. Both are public by design
+      # (every browser gets them); secret keys never go here.
       - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dkxdeaardevnwcohrxdn.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_FzOMF0hk1wJtDmvmHcc2ig_XEKpKKUe
 
   # On main only: apply new migrations to staging. Production is applied by hand
   # after Adhith approves staging (see docs/RUNBOOK.md).
