@@ -3830,6 +3830,12 @@ export type Database = {
     }
     Functions: {
       admin_sync_sequences: { Args: never; Returns: undefined }
+      move_lead: {
+        Args: { p_lead: string; p_to: Database["public"]["Enums"]["pipeline_status"]; p_lost_reason?: string; p_override_reason?: string }
+        Returns: Json
+      }
+      my_closings_count: { Args: { p_from: string; p_to: string }; Returns: number }
+      my_targets: { Args: never; Returns: { metric: string; period: string; target_value: number }[] }
       web_gallery: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {

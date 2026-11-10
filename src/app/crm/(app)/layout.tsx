@@ -10,11 +10,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <aside className="sidebar" aria-label="Main menu">
-        <Link href="/properties" className="logo" style={{ textDecoration: "none" }}>
+        <Link href="/dashboard" className="logo" style={{ textDecoration: "none" }}>
           AXE <span>| realty</span>
         </Link>
         <Suspense fallback={<nav className="nav" />}>
-          <NavLinks />
+          <Nav />
         </Suspense>
         <Suspense fallback={null}>
           <UserBox />
@@ -23,6 +23,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="main">{children}</div>
     </div>
   );
+}
+
+/** Closings and Commissions appear only for the Super Admin (and a future Sales Manager, read-only). */
+async function Nav() {
+  await connection();
+  const user = await requireUser();
+  return <NavLinks admin={user.role === "super_admin" || user.role === "sales_manager"} />;
 }
 
 async function UserBox() {

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// The dashboard arrives in Phase 2; until then the app opens on Properties.
+// The app opens on the dashboard.
 export default function Home() {
-  redirect("/properties");
+  redirect("/dashboard");
 }
