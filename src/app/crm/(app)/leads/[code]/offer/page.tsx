@@ -29,7 +29,7 @@ async function Builder({ params }: { params: Promise<{ code: string }> }) {
 
   // Properties this lead has viewed, most recent first: those are the ones an offer is made on.
   const { data: viewed } = await supabase.from("viewings")
-    .select(`date, property:properties(id, listing_no, unit_number, beds, parking, furnished, asking_rent, rent_currency, asking_sale_price, sale_currency,
+    .select(`date, property:properties(id, listing_no, property_type, building_name, location:locations(name), unit_number, beds, parking, furnished, asking_rent, rent_currency, asking_sale_price, sale_currency,
       tower_name_legacy, tower:development_towers(name), development:developments(name), owner:owners(name))`)
     .eq("lead_id", lead.id).is("deleted_at", null).order("date", { ascending: false });
   const seen = new Set<string>();
@@ -38,10 +38,12 @@ async function Builder({ params }: { params: Promise<{ code: string }> }) {
     const p = v.property;
     if (!p || seen.has(p.id)) continue;
     seen.add(p.id);
-    const where = [p.development?.name, p.tower?.name ?? p.tower_name_legacy, p.unit_number ? `Unit ${p.unit_number}` : null].filter(Boolean).join(", ");
+    const where = p.development?.name || p.building_name
+      ? [p.development?.name ?? p.building_name, p.tower?.name ?? p.tower_name_legacy, p.unit_number ? `Unit ${p.unit_number}` : null].filter(Boolean).join(", ")
+      : `${label(p.property_type)}${p.location?.name ? ` in ${p.location.name}` : ""} (${p.listing_no})`;
     const parking = p.parking != null ? `${p.parking} slot${p.parking === 1 ? "" : "s"}` : "";
     properties.push({
-      id: p.id, listingNo: p.listing_no ?? "", label: [p.development?.name, p.beds != null ? `${p.beds} bed` : null].filter(Boolean).join(" · "),
+      id: p.id, listingNo: p.listing_no ?? "", label: [p.development?.name ?? p.location?.name, p.beds != null ? `${p.beds} bed` : null].filter(Boolean).join(" · "),
       rental: { property: where, landlord: p.owner?.name ?? "", monthly_rent: money(p.asking_rent, p.rent_currency), furnishing: label(p.furnished), parking },
       sale: { property: where, seller: p.owner?.name ?? "", offer_price: money(p.asking_sale_price, p.sale_currency), inclusions: parking ? `${parking}, fixtures and fittings as inspected` : "" },
     });

@@ -11,12 +11,6 @@ import { AgentForm } from "./agent-form";
 export default function TeamPage() {
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Team &amp; targets</h1>
-          <p className="muted">Each agent&apos;s targets and progress. Agents see their own count targets on their dashboard; revenue stays here.</p>
-        </div>
-      </div>
       <Suspense fallback={<p className="muted">Loading team…</p>}>
         <Team />
       </Suspense>
@@ -57,6 +51,12 @@ async function Team() {
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>Team &amp; targets</h1>
+          <p className="muted">Each agent&apos;s targets and progress. Agents see their own count targets on their dashboard; revenue stays here.</p>
+        </div>
+      </div>
       <p className="muted" style={{ margin: 0, fontSize: 13 }}>
         Viewings and properties sourced count Monday to today; closings and revenue count this calendar month. An agent&apos;s revenue is half of each closing&apos;s
         revenue (our commission less referral fees) per side they worked, so a deal where they had both sides counts in full.
