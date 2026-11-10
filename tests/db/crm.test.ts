@@ -254,6 +254,17 @@ describe("what a closing does (7.2)", () => {
     expect(prop.rows[0].status).toBe("sold");
   });
 
+  it("leaves imported history alone: an Airtable closing doesn't touch today's property or lead", async () => {
+    const l = await lead({ pipeline_status: "contacted" });
+    const p = await property({ sourcing_model: "company_direct", status: "available" });
+    await db.query(
+      `insert into public.closings (closing_date, deal_type, lead_id, property_id, our_commission, commission_currency, airtable_id)
+       values ('2025-03-01', 'rental', $1, $2, 500000, 'LKR', 'recIMPORT1')`, [l, p]);
+    const prop = await db.query<{ status: string }>("select status from public.properties where id = $1", [p]);
+    expect(prop.rows[0].status).toBe("available");
+    expect(await stage(l)).toBe("contacted");
+  });
+
   it("keeps closings away from agents, but tells them their own closing count", async () => {
     const { rows } = await as(db, AGENT(), () => db.query<{ n: string }>("select public.my_closings_count('2026-12-01', '2026-12-31') n"));
     expect(Number(rows[0].n)).toBeGreaterThan(0);
