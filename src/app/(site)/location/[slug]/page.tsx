@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allListings, developments, locations } from "@/lib/site/data";
-import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, ListingsBlock, SiteHeader, Tiles } from "../../place";
+import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, Explore, FactsStrip, lifestyleLinks, ListingsBlock, SiteHeader, Tiles } from "../../place";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ intent?: string }> };
 
@@ -28,6 +28,7 @@ export default function LocationPage(props: Props) {
   );
 }
 
+// Order: what the area is, the listings (what searchers came for), the full guide, its buildings, then onward links.
 async function Location({ params, searchParams }: Props) {
   const { slug } = await params;
   const intent = (await searchParams).intent;
@@ -35,22 +36,30 @@ async function Location({ params, searchParams }: Props) {
   const loc = locs.find((l) => l.slug === slug);
   if (!loc) notFound();
   const here = all.filter((l) => l.location_slug === slug);
-  const devTiles = devs.filter((d) => d.location_slug === slug && d.slug).map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: chosen(d.image) ?? coverOf(all.filter((l) => l.development_slug === d.slug)) }));
+  const devsHere = devs.filter((d) => d.location_slug === slug && d.slug);
+  const devTiles = devsHere.map((d) => ({ href: `/development/${d.slug}/`, name: d.name ?? "", img: chosen(d.image) ?? coverOf(all.filter((l) => l.development_slug === d.slug)) }));
   const h1 = loc.seo_title?.split("|")[0].trim() || `Apartments for Sale & Rent in ${loc.name}`;
   const path = `/location/${slug}/`;
+  const otherAreas = locs.filter((l) => l.slug && l.slug !== slug && (l.listing_count ?? 0) > 0)
+    .map((l) => ({ href: `/location/${l.slug}/`, label: `Apartments in ${l.name}` }));
   return (
     <>
       <Banner eyebrow={`Apartments in ${loc.name}`} h1={h1} />
       <Crumbs items={[{ href: "/", label: "Home" }, { href: "/apartments-for-sale-rent/", label: "Apartments" }, { label: loc.name ?? "" }]} />
-      {loc.seo_intro && <section className="wrap" style={{ paddingTop: 36, paddingBottom: 40 }}><p className="lead">{loc.seo_intro}</p></section>}
+      <FactsStrip listings={here} extra={devsHere.length ? [{ k: "Buildings", v: String(devsHere.length) }] : []} />
+      {loc.seo_intro && <section className="wrap" style={{ paddingTop: 32, paddingBottom: 40 }}><p className="lead">{loc.seo_intro}</p></section>}
       <ListingsBlock title={`Apartments in ${loc.name}`} listings={here} intent={intent === "sale" || intent === "rent" ? intent : "all"} basePath={path} />
       <section className="wrap section"><Copy text={loc.seo_body} /></section>
       {devTiles.length > 0 && (
-        <section className="wrap" style={{ paddingBottom: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-          <h2 className="h2">Developments in {loc.name}</h2>
+        <section className="wrap" style={{ paddingBottom: 48, display: "flex", flexDirection: "column", gap: 20 }}>
+          <h2 className="h2">Buildings in {loc.name}</h2>
           <Tiles items={devTiles} />
         </section>
       )}
+      <Explore groups={[
+        { title: "Nearby areas", links: otherAreas },
+        { title: "Apartments by lifestyle", links: lifestyleLinks() },
+      ]} />
       <CtaBand title={`Looking for something specific in ${loc.name}?`} text="Tell us your brief. Many of our best units are placed before they are ever listed." />
     </>
   );

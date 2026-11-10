@@ -15,6 +15,14 @@ export const metadata: Metadata = {
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="site">
+      {/* Who runs this site: lets Google tie every page to the agency (name, address, phone). */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org", "@type": "RealEstateAgent", "@id": `${SITE.url}/#agency`,
+        name: SITE.name, url: `${SITE.url}/`, logo: `${SITE.url}/brand/axe-realty-logo.png`, image: `${SITE.url}/brand/axe-realty-logo.png`,
+        telephone: SITE.phone, email: SITE.email, priceRange: "$$$",
+        address: { "@type": "PostalAddress", streetAddress: "No. 95, Horton Place", addressLocality: "Colombo 07", addressRegion: "Western Province", addressCountry: "LK" },
+        areaServed: { "@type": "City", name: "Colombo" },
+      }) }} />
       <main>{children}</main>
       <SiteFooter />
       <WhatsAppFloat />

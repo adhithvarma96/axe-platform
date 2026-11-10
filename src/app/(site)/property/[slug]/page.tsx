@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { listingBySlug, listingByNo, sizes, type WebListing } from "@/lib/site/data";
+import { allListings, listingBySlug, listingByNo, sizes, type WebListing } from "@/lib/site/data";
 import { OLD_LISTINGS } from "@/lib/site/old-listings";
 import { featureLabel, headlinePrice, intentLabel, isRent, isSale, listingPath, listingTitle, SITE, typeNoun, waLink } from "@/lib/site/listing";
 import { date, label, money } from "@/lib/format";
-import { SiteHeader } from "../../components";
+import { Icon, ICON, ListingCard, SiteHeader } from "../../components";
 import { Gallery } from "../../gallery";
 import { EnquiryForm } from "../../forms";
 
@@ -65,94 +65,152 @@ async function Listing({ params }: Props) {
   const rent = isRent(l) && l.asking_rent ? money(l.asking_rent, l.rent_currency) : null;
   const sale = isSale(l) && l.asking_sale_price ? money(l.asking_sale_price, l.sale_currency) : null;
   const intro = `I'm interested in ${l.listing_no} (${l.development_name ?? typeNoun(l.property_type)}, ${l.location_name ?? "Colombo"}). Is it still available for a viewing?`;
+  const feature = (l.features ?? []).map(featureLabel)[0];
+  const place = l.development_name ?? l.location_name ?? "Colombo";
+  const h1 = `${l.beds != null ? `${l.beds} Bed ` : ""}${feature ? `${feature} ` : ""}${typeNoun(l.property_type)} in ${place}`;
+  const sqft = l.square_feet != null ? `${Math.round(l.square_feet).toLocaleString("en-US")} sq ft` : null;
+  const availableFrom = l.available_from && l.available_from > new Date().toISOString().slice(0, 10) ? date(l.available_from) : "Immediately";
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const specs = [
+    l.beds != null && { k: "Bedrooms", v: plural(l.beds, "Bed", "Beds") },
+    l.baths != null && { k: "Bathrooms", v: plural(l.baths, "Bath", "Baths") },
+    sqft && { k: "Living area", v: sqft },
+    l.parking != null && { k: "Parking", v: plural(l.parking, "Space", "Spaces") },
+    l.furnished && l.furnished !== "unknown" && { k: "Furnishing", v: label(l.furnished) },
+    l.condition && { k: "Condition", v: label(l.condition) },
+    { k: "Available", v: availableFrom },
+    { k: "Reference", v: l.listing_no ?? "" },
+  ].filter(Boolean) as { k: string; v: string }[];
+  // Listing agent's public WhatsApp when set in the CRM, else the company line.
+  const agentName = l.agent_name ?? "Axe Realty";
+  const agentWa = (l.agent_name && l.agent_whatsapp?.replace(/\D/g, "")) || SITE.whatsapp;
+  const agentPhone = l.agent_name && l.agent_whatsapp ? l.agent_whatsapp : SITE.phone;
+  const initials = agentName.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema(l, photos.map((p) => p.large))) }} />
       <div className="wrap" style={{ paddingTop: 22 }}>
-        <nav className="crumb" aria-label="Breadcrumb">
-          <Link href="/">Home</Link><span>›</span>
-          <Link href="/apartments-for-sale-rent/">Apartments</Link><span>›</span>
-          {l.location_slug && <><Link href={`/location/${l.location_slug}/`}>{l.location_name}</Link><span>›</span></>}
-          {l.development_slug && <><Link href={`/development/${l.development_slug}/`}>{l.development_name}</Link><span>›</span></>}
-          <span style={{ color: "var(--ink)", fontWeight: 600 }}>{l.listing_no}</span>
+        <nav className="crumb p-crumb" aria-label="Breadcrumb">
+          <Link href="/">Home</Link><span>/</span>
+          <Link href="/apartments-for-sale-rent/">Apartments</Link><span>/</span>
+          {l.location_slug && <><Link href={`/location/${l.location_slug}/`}>{l.location_name}</Link><span>/</span></>}
+          {l.development_slug && <><Link href={`/development/${l.development_slug}/`}>{l.development_name}</Link><span>/</span></>}
+          <span aria-current="page">{l.listing_no}</span>
         </nav>
       </div>
 
-      <section className="wrap" style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0, flex: "1 1 520px" }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <span className="pill">{typeNoun(l.property_type)}s {intentLabel(l)}</span>
-              {l.status === "reserved"
-                ? <span className="pill" style={{ background: "#fff1d6", color: "#6b4100" }}>Reserved</span>
-                : <span className="pill" style={{ background: "#e9f8ee", color: "#136b35" }}>Available</span>}
-            </div>
-            <h1 style={{ fontSize: "clamp(24px, 3.4vw, 34px)" }}>{title}</h1>
+      <section className="wrap" style={{ paddingTop: 22, display: "flex", flexDirection: "column", gap: 22 }}>
+        <div className="p-head">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0, flex: "1 1 480px" }}>
+            <span className="eyebrow-dot">{intentLabel(l)}{l.status === "reserved" ? " · Reserved" : ""} · Ref {l.listing_no}</span>
+            <h1 className="p-title">{h1}</h1>
+            <span className="p-sub">
+              <Icon d={ICON.pin} size={14} />
+              {l.development_slug ? <Link href={`/development/${l.development_slug}/`}>{l.development_name}</Link> : l.development_name}
+              {l.development_name && l.location_name ? ", " : ""}
+              {l.location_slug ? <Link href={`/location/${l.location_slug}/`}>{l.location_name}</Link> : l.location_name}
+            </span>
           </div>
-          <div style={{ textAlign: "right", fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--red)" }}>
-            {l.price_on_request ? <div style={{ fontSize: 26 }}>Price on request</div> : (
+          <div className="p-price">
+            {l.price_on_request ? (
+              <><span className="p-price-k">Asking price</span><b>Price on request</b></>
+            ) : (
               <>
-                {rent && <div style={{ fontSize: 30 }}>{rent}<span style={{ fontSize: 15, color: "var(--text)" }}> /month</span></div>}
-                {sale && <div style={{ fontSize: rent ? 22 : 30 }}>{rent ? "Sale: " : ""}{sale}</div>}
+                {rent && <><span className="p-price-k">Asking rent</span><b>{rent}<small> / month</small></b></>}
+                {sale && <><span className="p-price-k">{rent ? "Or to buy" : "Asking price"}</span><b className={rent ? "p-price-2" : undefined}>{sale}</b></>}
               </>
             )}
+            <a className="s-btn" href="#enquire">Book a viewing</a>
           </div>
         </div>
         <Gallery photos={photos} title={title} />
       </section>
 
-      <section className="wrap" style={{ paddingTop: 32, paddingBottom: 72, display: "flex", flexWrap: "wrap", gap: 40, alignItems: "flex-start" }}>
-        <div style={{ flex: "999 1 560px", minWidth: 0, display: "flex", flexDirection: "column", gap: 32 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(120px, 100%), 1fr))", gap: 12 }}>
-            {l.beds != null && <div className="fact"><b>{l.beds}</b><span>Bedrooms</span></div>}
-            {l.baths != null && <div className="fact"><b>{l.baths}</b><span>Bathrooms</span></div>}
-            {l.parking != null && <div className="fact"><b>{l.parking}</b><span>Parking</span></div>}
-            {l.square_feet != null && <div className="fact"><b>{Math.round(l.square_feet).toLocaleString("en-US")}</b><span>Sq ft</span></div>}
-            {l.land_extent_perches != null && <div className="fact"><b>{l.land_extent_perches}</b><span>Perches</span></div>}
-          </div>
-          {l.public_notes && (
+      <section className="wrap" style={{ paddingTop: 36, paddingBottom: 72 }}>
+        <div className="p-body">
+          <div style={{ display: "flex", flexDirection: "column", gap: 36, minWidth: 0 }}>
+            <dl className="p-specs">{specs.map((s) => <div key={s.k}><dt>{s.k}</dt><dd>{s.v}</dd></div>)}</dl>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <span className="eyebrow-dot">Overview</span>
+              <h2 className="p-lead">
+                {l.beds != null ? `${l.beds} bedroom` : "An"} {typeNoun(l.property_type).toLowerCase()} {intentLabel(l).toLowerCase()}
+                {l.development_name ? ` in ${l.development_name}` : ""}{l.location_name ? `, ${l.location_name}` : ""}.
+              </h2>
+              {l.public_notes && <p style={{ whiteSpace: "pre-line" }}>{l.public_notes}</p>}
+            </div>
+            {!!l.features?.length && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <span className="eyebrow-dot">Features</span>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{l.features.map((f) => <span key={f} className="tag">{featureLabel(f)}</span>)}</div>
+              </div>
+            )}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <h2 style={{ fontSize: 26 }}>Property Description</h2>
-              <p style={{ whiteSpace: "pre-line" }}>{l.public_notes}</p>
-            </div>
-          )}
-          <div>
-            <h2 style={{ fontSize: 26, marginBottom: 8 }}>Property Overview</h2>
-            <div className="kv"><span>Reference</span><b>{l.listing_no}</b></div>
-            {l.development_name && <div className="kv"><span>Development</span><b>{l.development_slug ? <Link href={`/development/${l.development_slug}/`}>{l.development_name}</Link> : l.development_name}</b></div>}
-            {l.location_name && <div className="kv"><span>Location</span><b>{l.location_slug ? <Link href={`/location/${l.location_slug}/`}>{l.location_name}</Link> : l.location_name}</b></div>}
-            {l.square_feet != null && <div className="kv"><span>Area</span><b>{Math.round(l.square_feet).toLocaleString("en-US")} sq ft</b></div>}
-            {l.furnished && l.furnished !== "unknown" && <div className="kv"><span>Furnishing</span><b>{label(l.furnished)}</b></div>}
-            {l.condition && <div className="kv"><span>Condition</span><b>{label(l.condition)}</b></div>}
-            <div className="kv"><span>Available from</span><b>{l.available_from && l.available_from > new Date().toISOString().slice(0, 10) ? date(l.available_from) : "Immediately"}</b></div>
-          </div>
-          {!!l.features?.length && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <h2 style={{ fontSize: 26 }}>Features</h2>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{l.features.map((f) => <span key={f} className="tag">{featureLabel(f)}</span>)}</div>
-            </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <h3 style={{ fontSize: 20 }}>Explore more</h3>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {l.development_slug && <Link className="chip" href={`/development/${l.development_slug}/`}>All {l.development_name} apartments</Link>}
-              {l.location_slug && <Link className="chip" href={`/location/${l.location_slug}/`}>All {l.location_name} apartments</Link>}
-              {(l.features ?? []).map((f) => <Link key={f} className="chip" href={`/lifestyle/${f === "penthouse" ? "penthouse" : f}-apartments-for-sale-rent/`}>{featureLabel(f)} apartments in Colombo</Link>)}
-              <Link className="chip" href="/properties/">Search all properties</Link>
+              <span className="eyebrow-dot">Explore more</span>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {l.development_slug && <Link className="chip" href={`/development/${l.development_slug}/`}>All {l.development_name} apartments</Link>}
+                {l.location_slug && <Link className="chip" href={`/location/${l.location_slug}/`}>All {l.location_name} apartments</Link>}
+                {(l.features ?? []).map((f) => <Link key={f} className="chip" href={`/lifestyle/${f}-apartments-for-sale-rent/`}>{featureLabel(f)} apartments in Colombo</Link>)}
+                <Link className="chip" href="/properties/">Search all properties</Link>
+              </div>
             </div>
           </div>
+
+          <aside className="p-aside">
+            <div className="agent-card">
+              <span className="agent-k">Listing advisor</span>
+              <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                <span className="agent-avatar" aria-hidden="true">{initials}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="agent-name">{agentName}</div>
+                  <div className="agent-role">{l.agent_name ? "Axe Realty" : "Colombo's apartment specialists"}</div>
+                </div>
+              </div>
+              <div className="agent-lines">
+                <span>{agentPhone} (WhatsApp)</span>
+                <span>{SITE.email}</span>
+              </div>
+              <a className="s-btn" href={waLink(intro, agentWa)}>WhatsApp about {l.listing_no}</a>
+            </div>
+            <div id="enquire" className="enquire-card">
+              <h2 style={{ fontSize: 22 }}>Book a viewing</h2>
+              <EnquiryForm listingNo={l.listing_no ?? ""} defaultMessage={intro} />
+            </div>
+          </aside>
         </div>
-        <aside style={{ flex: "1 1 340px", minWidth: 0, background: "var(--section)", borderRadius: 16, padding: 28, display: "flex", flexDirection: "column", gap: 14, boxSizing: "border-box" }}>
-          <h2 style={{ fontSize: 24 }}>Enquire about this property</h2>
-          <EnquiryForm listingNo={l.listing_no ?? ""} defaultMessage={intro} />
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-            <a className="s-btn s-btn-wa" href={waLink(intro, l.agent_whatsapp?.replace(/\D/g, "") || SITE.whatsapp)}>WhatsApp about {l.listing_no}</a>
-            <div style={{ fontSize: 14 }}>Call <b style={{ color: "var(--ink)" }}>{SITE.phone}</b> · {SITE.email}</div>
-          </div>
-        </aside>
       </section>
+
+      <Suspense fallback={null}><MoreToExplore l={l} /></Suspense>
     </>
+  );
+}
+
+/** Three more apartments: same building first, then the same area, then anything else. */
+async function MoreToExplore({ l }: { l: WebListing }) {
+  const all = (await allListings()).filter((x) => x.listing_no !== l.listing_no);
+  const tests = [
+    (x: WebListing) => !!l.development_slug && x.development_slug === l.development_slug,
+    (x: WebListing) => !!l.location_slug && x.location_slug === l.location_slug,
+    () => true,
+  ];
+  const pick: WebListing[] = [];
+  for (const test of tests) for (const x of all) if (pick.length < 3 && test(x) && !pick.includes(x)) pick.push(x);
+  if (!pick.length) return null;
+  return (
+    <section className="section section-alt">
+      <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span className="eyebrow-dot">Keep exploring</span>
+            <h2 className="h2">More apartments to explore</h2>
+          </div>
+          <Link className="l-card-btn" href={l.location_slug ? `/location/${l.location_slug}/` : "/properties/"}>
+            <i aria-hidden="true" />{l.location_name ? `All in ${l.location_name}` : "All properties"}
+          </Link>
+        </div>
+        <div className="cards">{pick.map((x) => <ListingCard key={x.listing_no} l={x} />)}</div>
+      </div>
+    </section>
   );
 }
 

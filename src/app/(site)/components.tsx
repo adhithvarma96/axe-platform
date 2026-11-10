@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { sizes, type WebListing } from "@/lib/site/data";
-import { headlinePrice, intentLabel, listingPath, listingTitle, SITE } from "@/lib/site/listing";
+import { featureLabel, headlinePrice, intentLabel, listingPath, listingTitle, SITE, typeNoun } from "@/lib/site/listing";
 
 export function SiteHeader({ variant = "solid" }: { variant?: "solid" | "hero" }) {
   return (
@@ -82,35 +82,52 @@ export function WhatsAppFloat() {
   );
 }
 
-const Icon = ({ d }: { d: string }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d={d} /></svg>
+export const Icon = ({ d, size = 16 }: { d: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
 );
+export const ICON = {
+  bed: "M3 18V7M3 13h18v5M21 18v-3M7 13v-2.5A1.5 1.5 0 0 1 8.5 9h3A1.5 1.5 0 0 1 13 10.5V13",
+  bath: "M4 12h16v2.5A4.5 4.5 0 0 1 15.5 19h-7A4.5 4.5 0 0 1 4 14.5zM6 12V6a2 2 0 0 1 3.7-1M7 19l-1 2M17 19l1 2",
+  area: "M4 4h16v16H4zM4 9h5V4M15 20v-5h5",
+  car: "M5 16h14M6 16l1.5-5h9L18 16M7 16v2M17 16v2M8.5 13.5h.01M15.5 13.5h.01",
+  pin: "M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+};
+
+/** Card name: the building, else "Apartment in Colombo 03". The reference stays visible: clients quote it. */
+export function cardName(l: WebListing): string {
+  return l.development_name ?? `${typeNoun(l.property_type)} in ${l.location_name ?? "Colombo"}`;
+}
 
 export function ListingCard({ l, intent }: { l: WebListing; intent?: "rent" | "sale" }) {
   const cover = sizes(l.cover);
   const img = cover["800"] ?? cover["400"];
   const { price, per } = headlinePrice(l, intent);
   const href = listingPath(l);
+  const feature = (l.features ?? []).map(featureLabel)[0];
   return (
     <article className="l-card">
-      <Link href={href} className="l-card-media" aria-label={listingTitle(l)}>
+      <Link href={href} className="l-card-media" aria-label={listingTitle(l)} tabIndex={-1}>
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={img.url} alt={`${l.development_name ?? "Apartment"}, ${l.location_name ?? "Colombo"}`} loading="lazy" width={img.width} height={img.height} />
         ) : null}
-        <span className="l-card-flag" style={{ bottom: 12, background: "var(--ink)" }}>{intentLabel(l)}</span>
-        {l.status === "reserved" && <span className="l-card-flag" style={{ top: 12, background: "#8a5300" }}>Reserved</span>}
+        <span className="l-chip"><i aria-hidden="true" />{intentLabel(l)}</span>
+        {l.status === "reserved" && <span className="l-chip l-chip-hold"><i aria-hidden="true" />Reserved</span>}
       </Link>
       <div className="l-card-body">
-        <h3 className="l-card-title"><Link href={href}>{listingTitle(l)}</Link></h3>
-        <div className="l-card-price">{price}<span>{per}</span></div>
+        <div className="l-card-head">
+          <h3 className="l-card-title"><Link href={href}>{cardName(l)}{feature ? <span className="l-card-feature"> · {feature}</span> : null}</Link></h3>
+          <div className="l-card-meta"><span><Icon d={ICON.pin} size={13} />{l.location_name ?? "Colombo"}</span><span>Ref {l.listing_no}</span></div>
+        </div>
         <ul className="l-card-facts">
-          {l.beds != null && <li aria-label={`${l.beds} bedrooms`}><Icon d="M2 18V8M2 13h20v5M22 18v-3M6 13V10h6v3" />{l.beds}</li>}
-          {l.baths != null && <li aria-label={`${l.baths} bathrooms`}><Icon d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM6 12V5a2 2 0 0 1 4 0" />{l.baths}</li>}
-          {l.parking != null && <li aria-label={`${l.parking} parking`}><Icon d="M4 3h16v18H4zM10 16V8h3a2.5 2.5 0 0 1 0 5h-3" />{l.parking}</li>}
-          {l.square_feet != null && <li aria-label="Area"><Icon d="M3 3h18v18H3zM3 9h6V3" />{Math.round(l.square_feet).toLocaleString("en-US")} sq ft</li>}
+          {l.beds != null && <li><Icon d={ICON.bed} />{l.beds} {l.beds === 1 ? "Bed" : "Beds"}</li>}
+          {l.baths != null && <li><Icon d={ICON.bath} />{l.baths} {l.baths === 1 ? "Bath" : "Baths"}</li>}
+          {l.square_feet != null && <li><Icon d={ICON.area} />{Math.round(l.square_feet).toLocaleString("en-US")} sq ft</li>}
         </ul>
-        <Link href={href} className="s-btn" style={{ marginTop: "auto", alignSelf: "center" }}>View Property</Link>
+        <div className="l-card-foot">
+          <div className="l-card-price">{price}<span>{per}</span></div>
+          <Link href={href} className="l-card-btn"><i aria-hidden="true" />View property</Link>
+        </div>
       </div>
     </article>
   );

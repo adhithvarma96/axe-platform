@@ -1,7 +1,7 @@
 // Shared template for the ranking pages: hub, rent/sale, location, development, lifestyle.
 import Link from "next/link";
 import { sizes, type WebListing } from "@/lib/site/data";
-import { isRent, isSale, SITE } from "@/lib/site/listing";
+import { isRent, isSale, listingPath, listingTitle, SITE } from "@/lib/site/listing";
 import { ListingCard, SiteHeader } from "./components";
 
 /** Renders carried-over copy: "## Heading", "- bullet", blank-line paragraphs. Bold lead-ins ("Label: text") kept. */
@@ -23,10 +23,20 @@ export function Copy({ text }: { text: string | null | undefined }) {
       list = [];
     }
   };
+  let lastHeading = "";
   for (const raw of text.split(/\n/)) {
     const line = raw.trim();
     if (!line) { flush(); continue; }
-    if (line.startsWith("## ")) { flush(); blocks.push(<h2 key={`h${blocks.length}`} className="copy-h">{line.slice(3)}</h2>); continue; }
+    if (line.startsWith("## ")) {
+      const h = line.slice(3).trim();
+      // The old site's "Featured Developments/Locations" carousels were imported as a run of headings;
+      // this page links those itself further down, so the carried-over copy ends there.
+      if (/^(featured|other) (developments|locations|lifestyles)$/i.test(h)) break;
+      if (h.toLowerCase() === lastHeading) continue; // "## Havelock City" twice in a row
+      lastHeading = h.toLowerCase();
+      flush(); blocks.push(<h2 key={`h${blocks.length}`} className="copy-h">{h}</h2>); continue;
+    }
+    lastHeading = "";
     if (line.startsWith("- ")) { list.push(line.slice(2)); continue; }
     flush();
     blocks.push(<p key={`p${blocks.length}`}>{line}</p>);
@@ -85,6 +95,10 @@ export function ListingsBlock({ title, listings, intent, basePath }: { title: st
         ) : (
           <p>No listings here right now. Many of our best units are placed before they are listed. <a href={`https://wa.me/${SITE.whatsapp}`}>WhatsApp us</a> what you need.</p>
         )}
+        {shown.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org", "@type": "ItemList", name: title, numberOfItems: shown.length,
+          itemListElement: shown.slice(0, 12).map((l, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE.url}${listingPath(l)}`, name: listingTitle(l) })),
+        }) }} />}
         {shown.length > 12 && <Link className="s-btn s-btn-dark" style={{ alignSelf: "center" }} href="/properties/">See all {shown.length} with filters</Link>}
       </div>
     </section>
@@ -124,6 +138,55 @@ export function CtaBand({ title, text, red = true }: { title: string; text: stri
           <p style={{ color: "#fff" }}>{text}</p>
         </div>
         <a className={`s-btn ${red ? "s-btn-dark" : ""}`} href={`https://wa.me/${SITE.whatsapp}`}>WhatsApp {SITE.phone}</a>
+      </div>
+    </section>
+  );
+}
+
+/** The four lifestyle pages: URL slug -> listing feature, name and banner eyebrow. */
+export const LIFESTYLES: Record<string, { feature: string; name: string; eyebrow: string }> = {
+  "penthouse-apartments-for-sale-rent": { feature: "penthouse", name: "Penthouses", eyebrow: "Penthouse Properties" },
+  "duplex-apartments-for-sale-rent": { feature: "duplex", name: "Duplex Apartments", eyebrow: "Duplex Properties" },
+  "pet-friendly-apartments-for-sale-rent": { feature: "pet-friendly", name: "Pet-Friendly", eyebrow: "Pet-Friendly Properties" },
+  "sea-view-apartments-for-sale-rent": { feature: "sea-view", name: "Sea View", eyebrow: "Sea-View Properties" },
+};
+
+export const lifestyleLinks = (except?: string) =>
+  Object.entries(LIFESTYLES).filter(([s]) => s !== except).map(([s, o]) => ({ href: `/lifestyle/${s}/`, label: `${o.name} in Colombo` }));
+
+/** At-a-glance facts from the live listings on this page: counts, bedroom range, freshness. */
+export function FactsStrip({ listings, extra = [] }: { listings: WebListing[]; extra?: { k: string; v: string }[] }) {
+  if (!listings.length && !extra.length) return null;
+  const rent = listings.filter(isRent).length, sale = listings.filter(isSale).length;
+  const beds = listings.map((l) => l.beds).filter((b): b is number => b != null);
+  const latest = listings.map((l) => l.updated_at ?? l.published_at ?? "").sort().pop();
+  const lo = beds.length ? Math.min(...beds) : 0, hi = beds.length ? Math.max(...beds) : 0;
+  const facts = [
+    ...(listings.length ? [{ k: "Available now", v: String(listings.length) }] : []),
+    ...(rent ? [{ k: "For rent", v: String(rent) }] : []),
+    ...(sale ? [{ k: "For sale", v: String(sale) }] : []),
+    ...(beds.length ? [{ k: "Bedrooms", v: lo === hi ? String(lo) : `${lo}–${hi}` }] : []),
+    ...extra,
+    ...(latest ? [{ k: "Updated", v: new Date(latest).toLocaleDateString("en-GB", { month: "short", year: "numeric" }) }] : []),
+  ];
+  return (
+    <div className="wrap"><dl className="facts-strip">{facts.map((f) => <div key={f.k}><dt>{f.k}</dt><dd>{f.v}</dd></div>)}</dl></div>
+  );
+}
+
+/** "Keep exploring": the hub-and-spoke links between areas, buildings and lifestyles. */
+export function Explore({ groups }: { groups: { title: string; links: { href: string; label: string }[] }[] }) {
+  const shown = groups.filter((g) => g.links.length);
+  if (!shown.length) return null;
+  return (
+    <section className="wrap" style={{ paddingTop: 8, paddingBottom: 24 }}>
+      <div className="explore">
+        {shown.map((g) => (
+          <nav key={g.title} aria-label={g.title}>
+            <h2 className="explore-h">{g.title}</h2>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{g.links.map((l) => <Link key={l.href} className="chip" href={l.href}>{l.label}</Link>)}</div>
+          </nav>
+        ))}
       </div>
     </section>
   );
