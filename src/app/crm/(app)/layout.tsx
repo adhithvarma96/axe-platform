@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { SlashToSearch } from "./slash-search";
 import { SignOutButton } from "../sign-out-button";
 import { NavLinks } from "./nav-links";
 
@@ -21,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Suspense>
       </aside>
       <div className="main">{children}</div>
+      <SlashToSearch />
     </div>
   );
 }
@@ -29,7 +32,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 async function Nav() {
   await connection();
   const user = await requireUser();
-  return <NavLinks admin={user.role === "super_admin" || user.role === "sales_manager"} />;
+  const supabase = await createClient();
+  const { count } = await supabase.from("notifications").select("id", { count: "exact", head: true })
+    .eq("recipient_agent_id", user.agentId ?? "00000000-0000-0000-0000-000000000000").is("read_at", null).is("deleted_at", null);
+  return <NavLinks admin={user.role === "super_admin" || user.role === "sales_manager"} unread={count ?? 0} />;
 }
 
 async function UserBox() {

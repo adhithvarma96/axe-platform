@@ -40,7 +40,7 @@ async function Lead({ params }: { params: Promise<{ code: string }> }) {
     .maybeSingle();
   if (!l) notFound();
 
-  const [gatesQ, ticksQ, viewingsQ, actsQ, tasksQ, histQ, lostQ, agentsQ] = await Promise.all([
+  const [gatesQ, ticksQ, viewingsQ, actsQ, tasksQ, histQ, lostQ, agentsQ, offersQ] = await Promise.all([
     supabase.from("gate_items").select("key, gate, label, sort_order").eq("active", true).is("deleted_at", null).order("gate").order("sort_order"),
     supabase.from("lead_gate_ticks").select("gate_item_key, ticked_by, ticked_at").eq("lead_id", l.id),
     supabase.from("viewings").select("id, viewing_no, date, time, outcome, last_follow_up, feedback_notes, property:properties(listing_no, development:developments(name), location:locations(name)), agent:agents(full_name)")
@@ -50,6 +50,7 @@ async function Lead({ params }: { params: Promise<{ code: string }> }) {
     supabase.from("lead_stage_history").select("from_status, to_status, changed_by, changed_at, override_reason").eq("lead_id", l.id).order("changed_at", { ascending: false }),
     supabase.from("lost_reasons").select("id, name").is("deleted_at", null).order("name"),
     supabase.from("agents").select("user_id, full_name"),
+    supabase.from("offers").select("ref, status, deal_type, issued_on, valid_until, property:properties(listing_no)").eq("lead_id", l.id).is("deleted_at", null).order("version", { ascending: false }),
   ]);
   const who = new Map((agentsQ.data ?? []).map((a) => [a.user_id, a.full_name]));
   const ticks = new Map((ticksQ.data ?? []).map((t) => [t.gate_item_key, t]));
@@ -98,6 +99,7 @@ async function Lead({ params }: { params: Promise<{ code: string }> }) {
           {wa && <a className="btn btn-sm" style={{ background: "#25D366", borderColor: "#25D366" }} href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
           {l.phone && <a className="btn btn-ghost btn-sm" href={`tel:${l.phone}`}>Call</a>}
           <Link className="btn btn-ghost btn-sm" href={`/viewings/new?lead=${l.lead_code}`}>Log viewing</Link>
+          <Link className="btn btn-ghost btn-sm" href={`/leads/${l.lead_code}/offer`}>Write offer</Link>
           <Link className="btn btn-ghost btn-sm" href={`/leads/${l.lead_code}/edit`}>Edit</Link>
           {user.role === "super_admin" && <Link className="btn btn-ghost btn-sm" href={`/closings/new?lead=${l.lead_code}`}>Log closing</Link>}
         </div>
@@ -158,6 +160,19 @@ async function Lead({ params }: { params: Promise<{ code: string }> }) {
             </table>
           </div>
         ) : <p className="muted">No viewings yet.</p>}
+      </section>
+
+      <section className="panel">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <h2 className="section-title" style={{ margin: 0 }}>Offers ({offersQ.data?.length ?? 0})</h2>
+          <Link className="btn btn-ghost btn-sm" href={`/leads/${l.lead_code}/offer`}>{offersQ.data?.length ? "+ Revised offer" : "+ Write offer"}</Link>
+        </div>
+        <ul className="mini-list" style={{ marginTop: 10 }}>
+          {(offersQ.data ?? []).map((o) => (
+            <li key={o.ref}><Link href={`/offers/${o.ref}`}>{o.ref}</Link><span className="muted">{label(o.deal_type)}{o.property ? ` · ${o.property.listing_no}` : ""} · {label(o.status)} · valid to {date(o.valid_until)}</span></li>
+          ))}
+          {!offersQ.data?.length && <li className="muted">No offers yet. Saving one as sent ticks Gate 1.</li>}
+        </ul>
       </section>
 
       <div className="grid-2">

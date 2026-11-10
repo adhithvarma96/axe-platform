@@ -2182,6 +2182,78 @@ export type Database = {
           },
         ]
       }
+      offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deal_type: Database["public"]["Enums"]["deal_type"]
+          deleted_at: string | null
+          id: string
+          issued_on: string
+          lead_id: string
+          property_id: string | null
+          ref: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["offer_status"]
+          terms: Json
+          updated_at: string
+          updated_by: string | null
+          valid_until: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deal_type: Database["public"]["Enums"]["deal_type"]
+          deleted_at?: string | null
+          id?: string
+          issued_on?: string
+          lead_id: string
+          property_id?: string | null
+          ref?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["offer_status"]
+          terms?: Json
+          updated_at?: string
+          updated_by?: string | null
+          valid_until: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deal_type?: Database["public"]["Enums"]["deal_type"]
+          deleted_at?: string | null
+          id?: string
+          issued_on?: string
+          lead_id?: string
+          property_id?: string | null
+          ref?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["offer_status"]
+          terms?: Json
+          updated_at?: string
+          updated_by?: string | null
+          valid_until?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_buying_locations: {
         Row: {
           created_at: string
@@ -2306,6 +2378,8 @@ export type Database = {
           notes: string | null
           open_to_buying: boolean
           owner_source_id: string | null
+          mandate_status: Database["public"]["Enums"]["mandate_status"] | null
+          mandate_updated_at: string | null
           owner_type: Database["public"]["Enums"]["owner_type"] | null
           primary_phone: string | null
           sourced_by_agent_id: string | null
@@ -2339,6 +2413,8 @@ export type Database = {
           notes?: string | null
           open_to_buying?: boolean
           owner_source_id?: string | null
+          mandate_status?: Database["public"]["Enums"]["mandate_status"] | null
+          mandate_updated_at?: string | null
           owner_type?: Database["public"]["Enums"]["owner_type"] | null
           primary_phone?: string | null
           sourced_by_agent_id?: string | null
@@ -2372,6 +2448,8 @@ export type Database = {
           notes?: string | null
           open_to_buying?: boolean
           owner_source_id?: string | null
+          mandate_status?: Database["public"]["Enums"]["mandate_status"] | null
+          mandate_updated_at?: string | null
           owner_type?: Database["public"]["Enums"]["owner_type"] | null
           primary_phone?: string | null
           sourced_by_agent_id?: string | null
@@ -3839,6 +3917,8 @@ export type Database = {
       web_gallery: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
+      mandate_status: "prospect" | "assessment_booked" | "mandate_won" | "lost"
+      offer_status: "draft" | "sent" | "countered" | "accepted" | "rejected" | "expired"
       activity_type: "call" | "whatsapp" | "email" | "meeting" | "note"
       agent_role: "super_admin" | "sales_manager" | "agent" | "data_entry"
       agent_status: "active" | "inactive"
@@ -4088,6 +4168,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      mandate_status: ["prospect", "assessment_booked", "mandate_won", "lost"],
+      offer_status: ["draft", "sent", "countered", "accepted", "rejected", "expired"],
       activity_type: ["call", "whatsapp", "email", "meeting", "note"],
       agent_role: ["super_admin", "sales_manager", "agent", "data_entry"],
       agent_status: ["active", "inactive"],

@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label, money, priceLines } from "@/lib/format";
+import { MandatePicker } from "../mandate-picker";
 
 export default function OwnerPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -47,6 +48,11 @@ async function Owner({ params }: { params: Promise<{ id: string }> }) {
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/owners">Owners</Link> › {o.name}</nav>
       <div className="page-head"><h1>{o.name}</h1>{o.open_to_buying && <span className="badge">Open to buying</span>}</div>
       {o.contact_protocol && <p className="protocol">Contact protocol: {label(o.contact_protocol)}{o.contact_notes ? ` · ${o.contact_notes}` : ""}</p>}
+      <section className="panel">
+        <h2 className="section-title">Mandate</h2>
+        <MandatePicker id={o.id} value={o.mandate_status} />
+        {o.mandate_updated_at && <p className="muted" style={{ fontSize: 13, margin: "8px 0 0" }}>Updated {new Date(o.mandate_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Colombo" })}</p>}
+      </section>
       <div className="grid-2">
         <section className="panel">
           <h2 className="section-title">Details</h2>

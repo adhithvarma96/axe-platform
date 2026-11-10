@@ -228,3 +228,33 @@ a:hover { color: var(--red-hover); }
 /* readable in both themes: --ink turns light in dark mode */
 .seg-tabs a.on, .chip-btn.on { background: var(--red); border-color: var(--red); color: #fff; }
 .avatar { background: var(--red); color: #fff; }
+
+/* sidebar search + unread count */
+.nav-search input { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; }
+.nav-count { background: var(--red); color: #fff; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 1px 7px; }
+.nav-active .nav-count { background: #fff; color: var(--red); }
+@media (max-width: 860px) { .nav-search { order: 2; flex: 1 1 100%; } }
+
+/* notifications inbox */
+.notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.notes li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.notes li.note-unread { border-left: 4px solid var(--red); }
+.note-open { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 14px 16px; cursor: pointer; }
+.note-open:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; border-radius: 12px; }
+.note-title { font-weight: 700; color: var(--ink); }
+.note-unread .note-title::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-right: 8px; vertical-align: middle; }
+.note-body { white-space: pre-line; font-size: 14px; color: var(--text); }
+
+/* offer generator */
+.offer-doc { background: #fff; color: #1d1d1b; border: 1px solid var(--line); border-radius: 12px; padding: 28px; font-size: 14px; line-height: 1.55; max-width: 760px; }
+.offer-doc h2 { font-size: 18px; letter-spacing: 0.04em; margin: 0 0 4px; color: #1d1d1b; }
+.offer-doc h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #EA2228; margin: 18px 0 6px; }
+.offer-doc ul { margin: 0; padding-left: 18px; }
+.offer-doc .offer-meta { color: #5d6982; font-size: 13px; }
+.offer-doc .offer-foot { margin-top: 22px; padding-top: 12px; border-top: 1px solid #e6e3dc; font-size: 12px; color: #5d6982; }
+@media print {
+  .sidebar, .no-print, nav.muted { display: none !important; }
+  .shell, .main { display: block; padding: 0; }
+  body { background: #fff; }
+  .offer-doc { border: 0; padding: 0; max-width: none; }
+}
