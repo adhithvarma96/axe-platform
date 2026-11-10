@@ -537,6 +537,37 @@ describe("public website allow-list", () => {
   });
 });
 
+describe("price guide", () => {
+  it("publishes only rounded brackets, and only with at least 4 apartments behind them", async () => {
+    const { rows: loc } = await db.query<{ id: string }>(
+      "insert into public.locations (name, slug) values ('Guide Town', 'guide-town') returning id",
+    );
+    const add = (rent: number) => db.query(
+      `insert into public.properties (property_type, status, listing_types, asking_rent, rent_currency, square_feet, location_id)
+       values ('apartment', 'rented', '{rent_long_term}', $1, 'USD', 1000, $2)`, [rent, loc[0].id],
+    );
+    for (const r of [1510, 1990, 2420]) await add(r);
+    const three = await as(db, ANON, () => db.query("select * from public.web_price_guide where slug = 'guide-town'"));
+    expect(three.rows).toHaveLength(0); // 3 apartments: no bracket
+
+    await add(3070);
+    const { rows, fields } = await as(db, ANON, () => db.query<Record<string, string | number | null>>(
+      "select * from public.web_price_guide where slug = 'guide-town'",
+    ));
+    expect(fields.map((f) => f.name).sort()).toEqual(
+      ["rent_psf_high", "rent_psf_low", "rent_usd_high", "rent_usd_low", "sale_lkr_high", "sale_lkr_low", "scope", "slug"],
+    );
+    const g = rows[0];
+    expect(g.scope).toBe("location");
+    expect(Number(g.rent_usd_low) % 100).toBe(0);
+    expect(Number(g.rent_usd_high) % 100).toBe(0);
+    expect(Number(g.rent_usd_low)).toBeGreaterThanOrEqual(1500);
+    expect(Number(g.rent_usd_high)).toBeLessThanOrEqual(3100);
+    expect(g.sale_lkr_low).toBeNull(); // no sale prices
+    for (const exact of ["1510", "1990", "2420", "3070"]) expect(JSON.stringify(rows)).not.toContain(exact);
+  });
+});
+
 describe("website property types", () => {
   it("shows only apartments until the setting allows other types", async () => {
     await db.query(
