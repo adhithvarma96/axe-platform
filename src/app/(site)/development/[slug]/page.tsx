@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { allListings, developments, locations } from "@/lib/site/data";
+import { allListings, developments, locations, priceGuide } from "@/lib/site/data";
 import { SITE } from "@/lib/site/listing";
-import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, Explore, FactsStrip, lifestyleLinks, ListingsBlock, SiteHeader, Tiles } from "../../place";
+import { Banner, chosen, PriceGuideBlock, Copy, coverOf, Crumbs, CtaBand, Explore, FactsStrip, lifestyleLinks, ListingsBlock, SiteHeader, Tiles } from "../../place";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ intent?: string }> };
 
@@ -32,7 +32,7 @@ export default function DevelopmentPage(props: Props) {
 async function Development({ params, searchParams }: Props) {
   const { slug } = await params;
   const intent = (await searchParams).intent;
-  const [devs, locs, all] = await Promise.all([developments(), locations(), allListings()]);
+  const [devs, locs, all, guide] = await Promise.all([developments(), locations(), allListings(), priceGuide("development", slug)]);
   const d = devs.find((x) => x.slug === slug);
   if (!d) notFound();
   const here = all.filter((l) => l.development_slug === slug);
@@ -66,6 +66,7 @@ async function Development({ params, searchParams }: Props) {
       <FactsStrip listings={here} extra={extra} />
       {d.seo_intro && <section className="wrap" style={{ paddingTop: 32, paddingBottom: 40 }}><p className="lead">{d.seo_intro}</p></section>}
       <ListingsBlock title={`${d.name} apartments available`} listings={here} intent={intent === "sale" || intent === "rent" ? intent : "all"} basePath={path} />
+      <PriceGuideBlock guide={guide} name={d.name ?? ""} building />
       <section className="wrap section"><Copy text={d.seo_body} /></section>
       {neighbourTiles.length > 0 && (
         <section className="wrap" style={{ paddingBottom: 48, display: "flex", flexDirection: "column", gap: 20 }}>

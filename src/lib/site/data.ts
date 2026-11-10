@@ -68,6 +68,16 @@ export async function sitePage(path: string): Promise<WebPage | null> {
   return data ?? null;
 }
 
+export type PriceGuide = Database["public"]["Views"]["web_price_guide"]["Row"];
+/** Rounded asking-price bracket for an area or building, or null when too few apartments stand behind it. */
+export async function priceGuide(scope: "location" | "development", slug: string): Promise<PriceGuide | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("places");
+  const { data, error } = await db().from("web_price_guide").select("*").eq("scope", scope).eq("slug", slug).maybeSingle();
+  return error ? null : (data ?? null); // a guide is nice to have: never break the page over it
+}
+
 export async function usdLkr(): Promise<number> {
   "use cache";
   cacheLife("hours");

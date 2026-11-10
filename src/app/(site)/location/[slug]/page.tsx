@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { allListings, developments, locations } from "@/lib/site/data";
-import { Banner, chosen, Copy, coverOf, Crumbs, CtaBand, Explore, FactsStrip, lifestyleLinks, ListingsBlock, SiteHeader, Tiles } from "../../place";
+import { allListings, developments, locations, priceGuide } from "@/lib/site/data";
+import { Banner, chosen, PriceGuideBlock, Copy, coverOf, Crumbs, CtaBand, Explore, FactsStrip, lifestyleLinks, ListingsBlock, SiteHeader, Tiles } from "../../place";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ intent?: string }> };
 
@@ -32,7 +32,7 @@ export default function LocationPage(props: Props) {
 async function Location({ params, searchParams }: Props) {
   const { slug } = await params;
   const intent = (await searchParams).intent;
-  const [locs, devs, all] = await Promise.all([locations(), developments(), allListings()]);
+  const [locs, devs, all, guide] = await Promise.all([locations(), developments(), allListings(), priceGuide("location", slug)]);
   const loc = locs.find((l) => l.slug === slug);
   if (!loc) notFound();
   const here = all.filter((l) => l.location_slug === slug);
@@ -49,6 +49,7 @@ async function Location({ params, searchParams }: Props) {
       <FactsStrip listings={here} extra={devsHere.length ? [{ k: "Buildings", v: String(devsHere.length) }] : []} />
       {loc.seo_intro && <section className="wrap" style={{ paddingTop: 32, paddingBottom: 40 }}><p className="lead">{loc.seo_intro}</p></section>}
       <ListingsBlock title={`Apartments in ${loc.name}`} listings={here} intent={intent === "sale" || intent === "rent" ? intent : "all"} basePath={path} />
+      <PriceGuideBlock guide={guide} name={loc.name ?? ""} />
       <section className="wrap section"><Copy text={loc.seo_body} /></section>
       {devTiles.length > 0 && (
         <section className="wrap" style={{ paddingBottom: 48, display: "flex", flexDirection: "column", gap: 20 }}>

@@ -3781,6 +3781,19 @@ export type Database = {
         }
         Relationships: []
       }
+      web_price_guide: {
+        Row: {
+          rent_psf_high: number | null
+          rent_psf_low: number | null
+          rent_usd_high: number | null
+          rent_usd_low: number | null
+          sale_lkr_high: number | null
+          sale_lkr_low: number | null
+          scope: string | null
+          slug: string | null
+        }
+        Relationships: []
+      }
       web_pages: {
         Row: {
           body: string | null

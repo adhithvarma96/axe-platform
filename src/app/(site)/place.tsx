@@ -1,6 +1,6 @@
 // Shared template for the ranking pages: hub, rent/sale, location, development, lifestyle.
 import Link from "next/link";
-import { sizes, type WebListing } from "@/lib/site/data";
+import { sizes, type PriceGuide, type WebListing } from "@/lib/site/data";
 import { isRent, isSale, listingPath, listingTitle, SITE } from "@/lib/site/listing";
 import { ListingCard, SiteHeader } from "./components";
 
@@ -171,6 +171,41 @@ export function FactsStrip({ listings, extra = [] }: { listings: WebListing[]; e
   ];
   return (
     <div className="wrap"><dl className="facts-strip">{facts.map((f) => <div key={f.k}><dt>{f.k}</dt><dd>{f.v}</dd></div>)}</dl></div>
+  );
+}
+
+const usd = (n: number) => `US$${Math.round(n).toLocaleString("en-US")}`;
+const lkr = (n: number) => (n >= 1e9 ? `LKR ${(n / 1e9).toFixed(2).replace(/\.?0+$/, "")}B` : `LKR ${Math.round(n / 1e6)}M`);
+
+/** The price guide: rounded brackets from web_price_guide (middle 60% of asking prices, min 4 apartments). */
+export function PriceGuideBlock({ guide, name, building = false }: { guide: PriceGuide | null; name: string; building?: boolean }) {
+  if (!guide) return null;
+  const items = [
+    guide.rent_usd_low != null && guide.rent_usd_high != null && { k: "Monthly rent", v: `${usd(guide.rent_usd_low)}–${usd(guide.rent_usd_high).replace("US$", "")}`, n: "per month" },
+    guide.rent_psf_low != null && guide.rent_psf_high != null && { k: "Rent per sq ft", v: `US$${Number(guide.rent_psf_low).toFixed(2)}–${Number(guide.rent_psf_high).toFixed(2)}`, n: "per sq ft, per month" },
+    guide.sale_lkr_low != null && guide.sale_lkr_high != null && { k: "Sale price", v: `${lkr(guide.sale_lkr_low)}–${lkr(guide.sale_lkr_high).replace("LKR ", "")}`, n: "asking price" },
+  ].filter(Boolean) as { k: string; v: string; n: string }[];
+  if (!items.length) return null;
+  return (
+    <section className="wrap" id="price-guide" style={{ paddingTop: 64 }}>
+      <div className="guide">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 760 }}>
+          <span className="eyebrow-dot">Axe Realty price guide</span>
+          <h2 className="h2">What {building ? `${name} apartments` : `apartments in ${name}`} rent and sell for</h2>
+          <p>
+            The typical range for {building ? "this building" : "this area"} right now, from the apartments we market here.
+            Where a specific unit lands depends on floor, view, size and furnishing.
+          </p>
+        </div>
+        <dl className="guide-grid">
+          {items.map((i) => <div key={i.k}><dt>{i.k}</dt><dd>{i.v}</dd><span>{i.n}</span></div>)}
+        </dl>
+        <p className="guide-note">
+          Guide ranges cover the middle of the market: asking prices of apartments Axe Realty has marketed {building ? "in this building" : "in this area"} over
+          the past two years, rounded. They are a guide, not a valuation. <Link href="/list-your-property/">Get a free assessment of your apartment</Link>.
+        </p>
+      </div>
+    </section>
   );
 }
 
