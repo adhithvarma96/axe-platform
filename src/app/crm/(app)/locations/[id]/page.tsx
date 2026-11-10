@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label } from "@/lib/format";
 import { WebsiteImage } from "../../website-image";
+import { ClosingHistory } from "../../closings/history";
 
 export default function LocationPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -56,6 +57,7 @@ async function Location({ params }: { params: Promise<{ id: string }> }) {
           ))}</p>
         ) : <p className="muted">None recorded.</p>}
       </section>
+      <ClosingHistory by="location" id={l.id} />
     </>
   );
 }

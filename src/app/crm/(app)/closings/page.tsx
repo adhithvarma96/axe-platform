@@ -12,7 +12,10 @@ export default function ClosingsPage({ searchParams }: { searchParams: Promise<S
     <>
       <div className="page-head">
         <div><h1>Closings</h1><p className="muted">Completed deals and how each commission was split. Super Admin only.</p></div>
-        <Link className="btn" href="/closings/new">+ Log closing</Link>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link className="btn btn-ghost" href="/closings/insights">Insights &amp; charts</Link>
+          <Link className="btn" href="/closings/new">+ Log closing</Link>
+        </div>
       </div>
       <Suspense fallback={<p className="muted">Loading closings…</p>}><Closings searchParams={searchParams} /></Suspense>
     </>

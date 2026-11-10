@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label } from "@/lib/format";
-import { MANDATES } from "./mandate-picker";
+import { MANDATES } from "./mandates";
 
 const PAGE = 50;
 type SP = Record<string, string | string[] | undefined>;

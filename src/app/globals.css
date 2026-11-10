@@ -258,3 +258,25 @@ a:hover { color: var(--red-hover); }
   body { background: #fff; }
   .offer-doc { border: 0; padding: 0; max-width: none; }
 }
+
+/* Property picker (log viewing) */
+.picker { display: flex; flex-direction: column; gap: 6px; }
+.picker-list { list-style: none; margin: 0; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.picker-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%; text-align: left; font: inherit; color: var(--text); background: transparent; border: 0; border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+button.picker-row:hover, button.picker-row:focus-visible { background: var(--card); }
+.picker-row.picked { border: 1px solid var(--line); background: var(--card); cursor: default; }
+.picker-text { display: flex; flex-direction: column; gap: 2px; font-size: 14px; min-width: 0; }
+.picker-text .muted { font-size: 13px; }
+.badge-ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.section-jump { display: flex; gap: 8px; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 8px 0; }
+
+/* Closing insights */
+.insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 20px; }
+.insight-h { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.hbars { display: flex; flex-direction: column; gap: 6px; }
+.hbar { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 10px; align-items: center; font-size: 13px; min-height: 26px; }
+.hbar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.hbar-track { height: 14px; display: block; }
+.hbar-track i { display: block; height: 100%; background: var(--red); border-radius: 0 4px 4px 0; }
+.hbar-value { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+.chart-scroll { overflow-x: auto; }

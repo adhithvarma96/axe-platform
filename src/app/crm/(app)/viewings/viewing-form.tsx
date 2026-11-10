@@ -4,9 +4,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { OUTCOMES, VIEWING_MODELS } from "@/lib/crm";
 import { saveViewing, type FormState } from "./actions";
+import { PropertyPicker } from "./property-picker";
+
+export interface PropertyOption { no: string; label: string; title: string; facts: string; owner: string; status: string; rank: number; search: string }
 
 export interface ViewingOptions {
-  properties: { no: string; label: string }[];
+  properties: PropertyOption[];
   leads: { code: string; label: string }[];
   agents: { id: string; name: string }[];
   externals: { id: string; name: string }[];
@@ -25,13 +28,12 @@ export function ViewingForm({ values, options, cancelHref }: { values: Record<st
   return (
     <form action={action} className="form-stack">
       {values.id && <input type="hidden" name="id" value={v("id")} />}
-      <datalist id="props">{options.properties.map((p) => <option key={p.no} value={`${p.no} – ${p.label}`} />)}</datalist>
       <datalist id="leadlist">{options.leads.map((l) => <option key={l.code} value={`${l.code} – ${l.label}`} />)}</datalist>
 
       <div className="panel form-grid">
         <div className="field" style={{ gridColumn: "1 / -1" }}>
           <label htmlFor="property">Property *</label>
-          <input id="property" name="property" list="props" defaultValue={v("property")} placeholder="Type a listing no or building" required autoComplete="off" />
+          <PropertyPicker options={options.properties} defaultValue={v("property")} />
         </div>
         <div className="field">
           <label htmlFor="viewing_model">Type</label>

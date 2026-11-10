@@ -1,11 +1,12 @@
 "use client";
 import { useActionState } from "react";
 import { saveAgent, type TeamState } from "./actions";
+import { ROLE_LABELS } from "./roles";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export type AgentFormData = {
-  id: string; work_email: string | null; weekly_day_off: string | null; public_name: string | null; public_whatsapp: string | null;
+  id: string; full_name: string; role: string; personal_phone: string | null; work_email: string | null; weekly_day_off: string | null; public_name: string | null; public_whatsapp: string | null;
   date_joined: string | null; probation_end_date: string | null; commission_exempt: boolean;
   targets: Record<string, number | undefined>;
 };
@@ -24,9 +25,14 @@ export function AgentForm({ a, canEdit }: { a: AgentFormData; canEdit: boolean }
           <div className="field"><label htmlFor={`r-${a.id}`}>Revenue a month (LKR)</label><input id={`r-${a.id}`} name="revenue_lkr" inputMode="numeric" defaultValue={t("revenue_lkr")} /></div>
         </div>
         <details>
-          <summary style={{ cursor: "pointer", fontSize: 14 }}>Working details</summary>
+          <summary style={{ cursor: "pointer", fontSize: 14 }}>Profile and working details</summary>
           <div className="form-grid" style={{ marginTop: 10 }}>
-            <div className="field"><label htmlFor={`e-${a.id}`}>Work email (for alerts)</label><input id={`e-${a.id}`} name="work_email" type="email" defaultValue={a.work_email ?? ""} /></div>
+            <div className="field"><label htmlFor={`fn-${a.id}`}>Full name</label><input id={`fn-${a.id}`} name="full_name" defaultValue={a.full_name} /></div>
+            <div className="field"><label htmlFor={`ro-${a.id}`}>Role</label>
+              <select id={`ro-${a.id}`} name="role" defaultValue={a.role}>{ROLE_LABELS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+            </div>
+            <div className="field"><label htmlFor={`pp-${a.id}`}>Personal phone</label><input id={`pp-${a.id}`} name="personal_phone" type="tel" defaultValue={a.personal_phone ?? ""} /></div>
+            <div className="field"><label htmlFor={`e-${a.id}`}>Work email (login and alerts)</label><input id={`e-${a.id}`} name="work_email" type="email" defaultValue={a.work_email ?? ""} /></div>
             <div className="field"><label htmlFor={`d-${a.id}`}>Day off</label>
               <select id={`d-${a.id}`} name="weekly_day_off" defaultValue={a.weekly_day_off ?? ""}>
                 <option value="">None</option>{DAYS.map((d) => <option key={d} value={d}>{d[0].toUpperCase() + d.slice(1)}</option>)}

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label, priceLines } from "@/lib/format";
 import { WebsiteImage } from "../../website-image";
+import { ClosingHistory } from "../../closings/history";
 
 export default function DevelopmentPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -78,6 +79,7 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
           </div>
         ) : <p className="muted">No properties in this development yet.</p>}
       </section>
+      <ClosingHistory by="development" id={id} />
     </>
   );
 }

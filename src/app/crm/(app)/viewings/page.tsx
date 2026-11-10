@@ -58,7 +58,9 @@ function Table({ rows, empty, showFollow = false }: { rows: Row[]; empty: string
 async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
   await connection();
   const user = await requireUser();
-  const mine = (await searchParams).mine === "1";
+  const sp = await searchParams;
+  const mine = sp.mine === "1";
+  const tab = typeof sp.tab === "string" ? sp.tab : "follow";
   const supabase = await createClient();
   const on = today();
   const scope = <T,>(q: T) => (mine && user.agentId ? (q as unknown as { eq: (c: string, v: string) => T }).eq("conducted_by_agent_id", user.agentId) : q);
@@ -77,30 +79,34 @@ async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
     return lc === v.lead?.lead_code && pn === v.property?.listing_no && d > v.date;
   }));
 
+  const sections = [
+    { key: "follow", title: "Follow-ups due", rows: followUps, empty: "Nothing waiting. Every pending viewing has been followed up in the last 2 days.", showFollow: true },
+    { key: "upcoming", title: "Upcoming", rows: (upcomingQ.data ?? []) as Row[], empty: "No viewings booked ahead." },
+    { key: "second", title: "Second viewings wanted", rows: second, empty: "None waiting to be booked." },
+    { key: "recent", title: "Last 30 days", rows: (recentQ.data ?? []) as Row[], empty: "No viewings in the last 30 days." },
+  ];
+  const cur = sections.find((x) => x.key === tab) ?? sections[0];
+  const href = (t: string, m: boolean) => `/viewings?${new URLSearchParams({ ...(t !== "follow" ? { tab: t } : {}), ...(m ? { mine: "1" } : {}) })}`;
+
   return (
     <>
+      <nav className="chips section-jump" aria-label="Viewing lists">
+        {sections.map((x) => (
+          <Link key={x.key} href={href(x.key, mine)} className={`chip-btn${x.key === cur.key ? " on" : ""}`} aria-current={x.key === cur.key ? "page" : undefined} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+            {x.title} ({x.rows.length})
+          </Link>
+        ))}
+      </nav>
       <div className="pager">
         <div className="seg-tabs">
-          <Link className={!mine ? "on" : ""} href="/viewings">Everyone</Link>
-          <Link className={mine ? "on" : ""} href="/viewings?mine=1">Mine only</Link>
+          <Link className={!mine ? "on" : ""} href={href(cur.key, false)}>Everyone</Link>
+          <Link className={mine ? "on" : ""} href={href(cur.key, true)}>Mine only</Link>
         </div>
         <span className="muted">{outcomeLabel("pending")} viewings in the past count as completed for the lead&apos;s stage.</span>
       </div>
       <section className="panel">
-        <h2 className="section-title">Follow-ups due ({followUps.length})</h2>
-        <Table rows={followUps} empty="Nothing waiting. Every pending viewing has been followed up in the last 2 days." showFollow />
-      </section>
-      <section className="panel">
-        <h2 className="section-title">Upcoming ({upcomingQ.data?.length ?? 0})</h2>
-        <Table rows={(upcomingQ.data ?? []) as Row[]} empty="No viewings booked ahead." />
-      </section>
-      <section className="panel">
-        <h2 className="section-title">Second viewings wanted ({second.length})</h2>
-        <Table rows={second} empty="None waiting to be booked." />
-      </section>
-      <section className="panel">
-        <h2 className="section-title">Last 30 days ({recentQ.data?.length ?? 0})</h2>
-        <Table rows={(recentQ.data ?? []) as Row[]} empty="No viewings in the last 30 days." />
+        <h2 className="section-title">{cur.title} ({cur.rows.length})</h2>
+        <Table rows={cur.rows} empty={cur.empty} showFollow={cur.showFollow} />
       </section>
     </>
   );

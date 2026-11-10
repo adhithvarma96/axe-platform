@@ -45,6 +45,19 @@ export async function saveProperty(_prev: FormState, form: FormData): Promise<Fo
     const { error } = await supabase.from("property_feature_links").insert(features.map((feature_id) => ({ property_id: propertyId!, feature_id })));
     if (error) return { error: friendly(error.message) };
   }
+  // External agent the listing came through (one per listing from this form; extra links from the import are kept)
+  if (form.has("source_external_agent")) {
+    const ext = String(form.get("source_external_agent") ?? "");
+    const { data: cur } = await supabase.from("property_source_external_agents").select("external_agent_id").eq("property_id", propertyId!);
+    const first = cur?.[0]?.external_agent_id ?? "";
+    if (ext !== first) {
+      if (first) await supabase.from("property_source_external_agents").delete().eq("property_id", propertyId!).eq("external_agent_id", first);
+      if (/^[0-9a-f-]{36}$/.test(ext) && !cur?.some((c) => c.external_agent_id === ext)) {
+        const { error } = await supabase.from("property_source_external_agents").insert({ property_id: propertyId!, external_agent_id: ext });
+        if (error) return { error: friendly(error.message) };
+      }
+    }
+  }
   return { next: `/properties/${listingNo}` }; // the form navigates there (see login/actions.ts)
 }
 

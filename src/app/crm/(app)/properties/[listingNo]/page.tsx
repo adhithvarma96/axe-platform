@@ -48,6 +48,7 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
        listing_agent:agents!properties_listing_agent_id_fkey(full_name, public_name, public_whatsapp, role, status),
        referral_partner:referral_partners(full_name),
        source_channel:source_channels(name),
+       source_agents:property_source_external_agents(agent:external_agents(id, name:agent_name, company, phone)),
        features:property_feature_links(feature:property_features(name)),
        photos:property_photos(id, variants, is_cover, is_public, sort_order, original_filename, deleted_at)`,
     )
@@ -63,6 +64,13 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
     .eq("property_id", p.id)
     .order("changed_at", { ascending: false })
     .limit(10);
+  const { data: viewings } = await supabase
+    .from("viewings")
+    .select("viewing_no, date, outcome, viewing_model, lead:leads(lead_code, name), agent:agents(full_name)")
+    .eq("property_id", p.id)
+    .is("deleted_at", null)
+    .order("date", { ascending: false })
+    .limit(20);
   const features = (p.features ?? []).map((f) => f.feature?.name).filter(Boolean).join(", ");
   const t = p.property_type;
   const visible = photos.filter((ph) => ph.is_public);
@@ -90,6 +98,7 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span className={`badge badge-${p.status}`}>{label(p.status)}</span>
+          <Link className="btn btn-sm" href={`/viewings/new?property=${p.listing_no}`}>+ Log viewing</Link>
           <Link className="btn btn-ghost btn-sm" href={`/properties/${p.listing_no}/edit`}>Edit</Link>
           <PublishSwitch propertyId={p.id} published={p.website_published} />
         </div>
@@ -170,9 +179,31 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
           <Facts rows={[
             ["Listing agent", p.listing_agent?.full_name], ["Sourcing model", label(p.sourcing_model)],
             ["Referral partner", p.referral_partner?.full_name], ["Source channel", p.source_channel?.name],
-            ["Listing source", label(p.listing_source_type)], ["Commission structure", p.commission_structure],
+            ["Listing source", label(p.listing_source_type)],
+            ["Sourced via", (p.source_agents ?? []).length ? (p.source_agents ?? []).map((s, i) => s.agent && (
+              <span key={s.agent.id}>{i > 0 && ", "}<Link href={`/external-agents/${s.agent.id}`}>{s.agent.name}</Link>{s.agent.company ? ` (${s.agent.company})` : ""}{s.agent.phone ? ` · ${s.agent.phone}` : ""}</span>
+            )) : p.listing_source_type === "via_agent" ? <span className="muted">Agent not recorded. Add it under Edit.</span> : null],
+            ["Commission structure", p.commission_structure],
             ["Bulk import (not counted as sourced)", p.is_bulk_import],
           ]} />
+        </section>
+
+        <section className="panel">
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+            <h2 className="section-title">Viewings{viewings?.length ? ` (${viewings.length === 20 ? "latest 20" : viewings.length})` : ""}</h2>
+            <Link className="btn btn-ghost btn-sm" href={`/viewings/new?property=${p.listing_no}`}>+ Log viewing</Link>
+          </div>
+          {viewings?.length ? (
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              {viewings.map((v) => (
+                <li key={v.viewing_no} style={{ fontSize: 14 }}>
+                  <Link href={`/viewings/${v.viewing_no}`}>{date(v.date)}</Link>
+                  {" · "}{v.lead ? <Link href={`/leads/${v.lead.lead_code}`}>{v.lead.name}</Link> : label(v.viewing_model)}
+                  {" · "}<span className="muted">{label(v.outcome)}{v.agent ? ` · ${v.agent.full_name}` : ""}</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="muted" style={{ margin: 0 }}>No viewings logged yet.</p>}
         </section>
 
         {(t === "house" || t === "villa") && (

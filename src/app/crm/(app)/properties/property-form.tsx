@@ -9,7 +9,7 @@ import { saveProperty, type FormState } from "./actions";
 export interface Option { id: string; name: string; development_id?: string }
 export interface FormOptions {
   locations: Option[]; developments: Option[]; towers: Option[]; owners: Option[];
-  agents: Option[]; referral_partners: Option[]; source_channels: Option[]; features: Option[];
+  agents: Option[]; referral_partners: Option[]; source_channels: Option[]; features: Option[]; external_agents: Option[];
 }
 
 export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref }: {
@@ -97,6 +97,16 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
                     </label>
                   ))}
                 </div>
+              </div>
+            )}
+            {g.id === "sourcing" && (
+              <div className="field">
+                <label htmlFor="pf-source-agent">Sourced via external agent</label>
+                <select id="pf-source-agent" name="source_external_agent" defaultValue={((values.source_agent_ids as string[]) ?? [])[0] ?? ""}>
+                  <option value="">None (direct)</option>
+                  {options.external_agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+                <small className="muted">For listings that came through another broker. <Link href="/external-agents/new">Add a new agent</Link></small>
               </div>
             )}
             {g.id === "size" && (

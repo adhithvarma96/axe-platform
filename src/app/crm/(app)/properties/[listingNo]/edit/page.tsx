@@ -22,7 +22,7 @@ async function EditForm({ params }: { params: Promise<{ listingNo: string }> }) 
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("properties")
-    .select("*, features:property_feature_links(feature_id)")
+    .select("*, features:property_feature_links(feature_id), source_agents:property_source_external_agents(external_agent_id)")
     .eq("listing_no", decodeURIComponent(listingNo).toUpperCase())
     .is("deleted_at", null)
     .maybeSingle();
@@ -35,7 +35,7 @@ async function EditForm({ params }: { params: Promise<{ listingNo: string }> }) 
       </nav>
       <div className="page-head"><h1>Edit {p.listing_no}</h1></div>
       <PropertyForm
-        values={p as unknown as Record<string, unknown>}
+        values={{ ...(p as unknown as Record<string, unknown>), source_agent_ids: (p.source_agents ?? []).map((s) => s.external_agent_id) }}
         options={options}
         featureIds={(p.features ?? []).map((f) => f.feature_id)}
         isAdmin={user.role === "super_admin"}

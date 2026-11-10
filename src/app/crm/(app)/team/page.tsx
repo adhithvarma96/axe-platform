@@ -7,6 +7,7 @@ import { money } from "@/lib/format";
 import { today } from "@/lib/crm";
 import { METRICS, periods, revenueByAgent } from "@/lib/revenue";
 import { AgentForm } from "./agent-form";
+import { AddMember, MemberAccess } from "./members-ui";
 
 export default function TeamPage() {
   return (
@@ -38,8 +39,8 @@ async function Team() {
   const w = periods(on);
 
   const [agentsQ, hrQ, targetsQ, closingsQ, viewQ, srcQ] = await Promise.all([
-    supabase.from("agents").select("id, full_name, role, status, work_email, weekly_day_off, public_name, public_whatsapp").is("deleted_at", null).in("role", ["agent", "sales_manager", "super_admin"]).order("status").order("full_name"),
-    supabase.from("agent_hr").select("agent_id, date_joined, probation_end_date, commission_exempt"),
+    supabase.from("agents").select("id, full_name, role, status, work_email, weekly_day_off, public_name, public_whatsapp, user_id").is("deleted_at", null).order("status").order("full_name"),
+    supabase.from("agent_hr").select("agent_id, date_joined, probation_end_date, commission_exempt, personal_phone"),
     supabase.from("agent_targets").select("agent_id, metric, target_value").is("deleted_at", null).lte("effective_from", on).or(`effective_to.is.null,effective_to.gte.${on}`),
     supabase.from("closings").select("our_commission, commission_currency, usd_lkr_rate, referrer_total, lead_side_agent_id, listing_side_agent_id").is("deleted_at", null).gte("closing_date", w.month).lte("closing_date", w.monthEnd),
     supabase.from("viewings").select("conducted_by_agent_id").is("deleted_at", null).gte("date", w.monday).lte("date", on),
@@ -61,6 +62,7 @@ async function Team() {
         Viewings and properties sourced count Monday to today; closings and revenue count this calendar month. An agent&apos;s revenue is half of each closing&apos;s
         revenue (our commission less referral fees) per side they worked, so a deal where they had both sides counts in full.
       </p>
+      {user.role === "super_admin" && <AddMember />}
       {(agentsQ.data ?? []).map((a) => {
         const hr = hrQ.data?.find((h) => h.agent_id === a.id);
         const targets = Object.fromEntries((targetsQ.data ?? []).filter((t) => t.agent_id === a.id).map((t) => [t.metric, Number(t.target_value)]));
@@ -81,8 +83,9 @@ async function Team() {
               <div className="kpi"><span>{METRICS[2].label} this month</span><Progress v={deals.get(a.id) ?? 0} t={targets.closings} /></div>
               <div className="kpi"><span>Revenue this month</span><Progress v={rev.get(a.id) ?? 0} t={targets.revenue_lkr} fmt={lkr} /></div>
             </div>
+            {user.role === "super_admin" && <MemberAccess id={a.id} active={a.status === "active"} hasLogin={!!a.user_id} isMe={a.id === user.agentId} />}
             <AgentForm canEdit={user.role === "super_admin"} a={{
-              id: a.id, work_email: a.work_email, weekly_day_off: a.weekly_day_off, public_name: a.public_name, public_whatsapp: a.public_whatsapp,
+              id: a.id, full_name: a.full_name, role: a.role, personal_phone: hr?.personal_phone ?? null, work_email: a.work_email, weekly_day_off: a.weekly_day_off, public_name: a.public_name, public_whatsapp: a.public_whatsapp,
               date_joined: hr?.date_joined ?? null, probation_end_date: hr?.probation_end_date ?? null, commission_exempt: hr?.commission_exempt ?? false, targets,
             }} />
           </section>

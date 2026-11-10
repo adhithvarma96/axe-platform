@@ -49,7 +49,13 @@ export async function saveAgent(_prev: TeamState, form: FormData): Promise<TeamS
   }
 
   const dayOff = s(form, "weekly_day_off");
+  const fullName = s(form, "full_name");
+  const role = s(form, "role");
+  if (role && !["agent", "sales_manager", "data_entry", "super_admin"].includes(role)) return { error: "Pick a role." };
+  if (agentId === user.agentId && role && role !== "super_admin") return { error: "You can't change your own role." };
   const { error: aErr } = await supabase.from("agents").update({
+    ...(fullName ? { full_name: fullName } : {}),
+    ...(role ? { role: role as never } : {}),
     work_email: s(form, "work_email")?.toLowerCase() ?? null,
     weekly_day_off: dayOff as never,
     public_name: s(form, "public_name"),
@@ -57,7 +63,7 @@ export async function saveAgent(_prev: TeamState, form: FormData): Promise<TeamS
   }).eq("id", agentId);
   if (aErr) return { error: aErr.message };
 
-  const hr = { agent_id: agentId, probation_end_date: s(form, "probation_end_date"), date_joined: s(form, "date_joined"), commission_exempt: form.get("commission_exempt") === "on" };
+  const hr = { agent_id: agentId, personal_phone: s(form, "personal_phone"), probation_end_date: s(form, "probation_end_date"), date_joined: s(form, "date_joined"), commission_exempt: form.get("commission_exempt") === "on" };
   const { error: hErr } = await supabase.from("agent_hr").upsert(hr, { onConflict: "agent_id" });
   if (hErr) return { error: hErr.message };
 

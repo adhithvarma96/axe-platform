@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { setMandate } from "./actions";
 
-export const MANDATES: [string, string][] = [["prospect", "Prospect"], ["assessment_booked", "Assessment booked"], ["mandate_won", "Mandate won"], ["lost", "Lost"]];
+import { MANDATES } from "./mandates";
 
 export function MandatePicker({ id, value }: { id: string; value: string | null }) {
   const [v, setV] = useState(value ?? "");
