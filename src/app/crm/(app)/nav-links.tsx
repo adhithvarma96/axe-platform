@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const ITEMS: { href: string; label: string; admin?: boolean }[] = [
+const ITEMS: { href: string; label: string; admin?: boolean; superOnly?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/notifications", label: "Notifications" },
   { href: "/leads", label: "Leads" },
@@ -17,10 +17,10 @@ const ITEMS: { href: string; label: string; admin?: boolean }[] = [
   { href: "/closings", label: "Closings", admin: true },
   { href: "/commissions", label: "Commissions", admin: true },
   { href: "/team", label: "Team & targets", admin: true },
-  { href: "/website", label: "Website" },
+  { href: "/website", label: "Website", superOnly: true },
 ];
 
-export function NavLinks({ admin = false, unread = 0 }: { admin?: boolean; unread?: number }) {
+export function NavLinks({ admin = false, superAdmin = false, unread = 0 }: { admin?: boolean; superAdmin?: boolean; unread?: number }) {
   const path = usePathname();
   return (
     <>
@@ -30,7 +30,7 @@ export function NavLinks({ admin = false, unread = 0 }: { admin?: boolean; unrea
           onKeyDown={(e) => { if (e.key === "Escape") (e.target as HTMLInputElement).blur(); }} />
       </form>
       <nav className="nav">
-        {ITEMS.filter((i) => !i.admin || admin).map((i) => {
+        {ITEMS.filter((i) => (!i.admin || admin) && (!i.superOnly || superAdmin)).map((i) => {
           const on = path === i.href || path.startsWith(`${i.href}/`);
           return (
             <Link key={i.href} href={i.href} className={`nav-item${on ? " nav-active" : ""}`} aria-current={on ? "page" : undefined}>

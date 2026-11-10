@@ -3,12 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { addDays, today } from "@/lib/crm";
+import { today } from "@/lib/crm";
+import { rangeParams, resolveRange } from "@/lib/date-range";
+import { DateRangeFilter } from "../../date-range-filter";
 import { byMonth, groupStats, median, usd, type ClosingPoint, type DealKind, type GroupStat } from "@/lib/closing-stats";
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-const PERIODS: [string, string, number | null][] = [["all", "All time", null], ["12m", "12 months", 365], ["6m", "6 months", 182], ["3m", "3 months", 91]];
 
 export default function InsightsPage({ searchParams }: { searchParams: Promise<SP> }) {
   return (
@@ -102,12 +103,14 @@ async function Insights({ searchParams }: { searchParams: Promise<SP> }) {
   if (user.role !== "super_admin" && user.role !== "sales_manager") return <p className="muted">Closing insights are visible to the Super Admin only.</p>;
   const sp = await searchParams;
   const kind: DealKind = one(sp.deal) === "sale" ? "sale" : "rental";
-  const period = PERIODS.find(([k]) => k === one(sp.period)) ?? PERIODS[0];
+  const r = resolveRange({ range: one(sp.range), from: one(sp.from), to: one(sp.to) }, today(), "all");
+  const keepRange = rangeParams(r, "all");
   const supabase = await createClient();
   let q = supabase.from("closings")
     .select("closing_date, deal_type, monthly_rent_usd, total_deal_value_usd, property:properties(beds, square_feet, development:developments(id, name), location:locations(id, name))")
     .is("deleted_at", null);
-  if (period[2]) q = q.gte("closing_date", addDays(today(), -period[2]));
+  if (r.from) q = q.gte("closing_date", r.from);
+  if (r.to) q = q.lte("closing_date", r.to);
   const { data, error } = await q;
   if (error) return <p className="error">{error.message}</p>;
 
@@ -136,15 +139,11 @@ async function Insights({ searchParams }: { searchParams: Promise<SP> }) {
     <>
       <div className="pager" style={{ flexWrap: "wrap", gap: 10 }}>
         <div className="seg-tabs">
-          <Link className={kind === "rental" ? "on" : ""} href={`/closings/insights?${new URLSearchParams(period[0] !== "all" ? { period: period[0] } : {})}`}>Rentals</Link>
-          <Link className={kind === "sale" ? "on" : ""} href={`/closings/insights?${new URLSearchParams({ deal: "sale", ...(period[0] !== "all" ? { period: period[0] } : {}) })}`}>Sales</Link>
-        </div>
-        <div className="seg-tabs">
-          {PERIODS.map(([k, l]) => (
-            <Link key={k} className={k === period[0] ? "on" : ""} href={`/closings/insights?${new URLSearchParams({ ...(kind === "sale" ? { deal: "sale" } : {}), ...(k !== "all" ? { period: k } : {}) })}`}>{l}</Link>
-          ))}
+          <Link className={kind === "rental" ? "on" : ""} href={`/closings/insights?${new URLSearchParams(keepRange)}`}>Rentals</Link>
+          <Link className={kind === "sale" ? "on" : ""} href={`/closings/insights?${new URLSearchParams({ deal: "sale", ...keepRange })}`}>Sales</Link>
         </div>
       </div>
+      <DateRangeFilter path="/closings/insights" range={r} fallback="all" keep={kind === "sale" ? { deal: "sale" } : {}} />
 
       <div className="kpis" style={{ margin: 0 }}>
         <div className="kpi"><span>{kind === "rental" ? "Rentals" : "Sales"} closed</span><b>{mine.length}</b></div>

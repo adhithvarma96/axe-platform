@@ -4,6 +4,9 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { date, label, money } from "@/lib/format";
+import { today } from "@/lib/crm";
+import { rangeParams, resolveRange } from "@/lib/date-range";
+import { DateRangeFilter } from "../date-range-filter";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -26,12 +29,15 @@ async function Closings({ searchParams }: { searchParams: Promise<SP> }) {
   await connection();
   const user = await requireUser();
   if (user.role !== "super_admin" && user.role !== "sales_manager") return <p className="muted">Closings are visible to the Super Admin only.</p>;
-  const year = String((await searchParams).fy ?? "");
+  const sp = await searchParams;
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+  const r = resolveRange({ range: one(sp.range), from: one(sp.from), to: one(sp.to) }, today(), "all");
   const supabase = await createClient();
   let q = supabase.from("closings")
     .select("id, closing_no, closing_date, deal_type, our_commission, commission_currency, usd_lkr_rate, referrer_total, split_delta, split_override_reason, total_deal_value, deal_currency, lead:leads(lead_code, name), property:properties(listing_no, development:developments(name)), lead_agent:agents!closings_lead_side_agent_id_fkey(full_name), listing_agent:agents!closings_listing_side_agent_id_fkey(full_name)")
     .is("deleted_at", null).order("closing_date", { ascending: false }).order("closing_no", { ascending: false });
-  if (/^\d{4}$/.test(year)) q = q.gte("closing_date", `${year}-04-01`).lte("closing_date", `${Number(year) + 1}-03-31`);
+  if (r.from) q = q.gte("closing_date", r.from);
+  if (r.to) q = q.lte("closing_date", r.to);
   const { data: rows, error } = await q;
   if (error) return <p className="error">{error.message}</p>;
   const toLkr = (amt: number | null, cur: string | null, rate: number | null) => (amt == null ? 0 : cur === "USD" ? amt * (rate || 0) : amt);
@@ -41,14 +47,9 @@ async function Closings({ searchParams }: { searchParams: Promise<SP> }) {
     <>
       <div className="pager">
         <span><strong style={{ color: "var(--ink)" }}>{rows?.length ?? 0} closings</strong> <span className="muted">· revenue counted toward target (commission less referral fees): {money(revenue, "LKR")}</span></span>
-        <form action="/closings" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <label htmlFor="fy" className="muted" style={{ fontSize: 13 }}>Financial year from April</label>
-          <select id="fy" name="fy" defaultValue={year} style={{ font: "inherit", minHeight: 36, borderRadius: 8, border: "1px solid var(--line)" }}>
-            <option value="">All</option>{[2026, 2025, 2024].map((y) => <option key={y} value={y}>{y}/{String(y + 1).slice(2)}</option>)}
-          </select>
-          <button className="btn btn-ghost btn-sm" type="submit">Show</button>
-        </form>
+        <a className="muted" style={{ fontSize: 13 }} href={`/closings/insights?${new URLSearchParams(rangeParams(r, "all"))}`}>Charts for this period →</a>
       </div>
+      <DateRangeFilter path="/closings" range={r} fallback="all" />
       <div className="table-wrap">
         <table className="table">
           <thead><tr><th scope="col">#</th><th scope="col">Date</th><th scope="col">Deal</th><th scope="col">Sides</th><th scope="col">Our commission</th><th scope="col">Split</th></tr></thead>

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
@@ -31,6 +32,7 @@ export default function WebsitePage() {
 async function Pages() {
   await connection();
   const user = await requireUser();
+  if (user.role !== "super_admin") redirect("/dashboard");
   const supabase = await createClient();
   const { data: pages } = await supabase.from("site_pages").select("path, website_image").in("path", Object.keys(NAMES)).is("deleted_at", null);
   const byPath = new Map((pages ?? []).map((p) => [p.path, p]));

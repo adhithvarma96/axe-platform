@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { date, label } from "@/lib/format";
 import { addDays, daysBetween, needsFollowUp, outcomeLabel, today } from "@/lib/crm";
 import { OutcomeButtons } from "./outcome-buttons";
+import { resolveRange } from "@/lib/date-range";
+import { DateRangeFilter } from "../date-range-filter";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -61,6 +63,8 @@ async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const mine = sp.mine === "1";
   const tab = typeof sp.tab === "string" ? sp.tab : "follow";
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+  const r = resolveRange({ range: one(sp.range), from: one(sp.from), to: one(sp.to) }, today());
   const supabase = await createClient();
   const on = today();
   const scope = <T,>(q: T) => (mine && user.agentId ? (q as unknown as { eq: (c: string, v: string) => T }).eq("conducted_by_agent_id", user.agentId) : q);
@@ -71,6 +75,10 @@ async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
     scope(supabase.from("viewings").select(SELECT).is("deleted_at", null).eq("outcome", "wants_second_viewing").order("date", { ascending: false })).limit(100),
     scope(supabase.from("viewings").select(SELECT).is("deleted_at", null).lte("date", on).gte("date", addDays(on, -30)).order("date", { ascending: false })).limit(200),
   ]);
+  let histQ = supabase.from("viewings").select(SELECT).is("deleted_at", null);
+  if (r.from) histQ = histQ.gte("date", r.from);
+  if (r.to) histQ = histQ.lte("date", r.to);
+  const history = (tab === "all" ? ((await scope(histQ.order("date", { ascending: false })).limit(2000)).data ?? []) : []) as Row[];
   const followUps = ((pendingQ.data ?? []) as Row[]).filter((v) => needsFollowUp(v, on));
   // second viewings with no later viewing of the same lead + property (7.7)
   const later = new Set(((recentQ.data ?? []) as Row[]).concat((upcomingQ.data ?? []) as Row[]).map((v) => `${v.lead?.lead_code}|${v.property?.listing_no}|${v.date}`));
@@ -84,16 +92,18 @@ async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
     { key: "upcoming", title: "Upcoming", rows: (upcomingQ.data ?? []) as Row[], empty: "No viewings booked ahead." },
     { key: "second", title: "Second viewings wanted", rows: second, empty: "None waiting to be booked." },
     { key: "recent", title: "Last 30 days", rows: (recentQ.data ?? []) as Row[], empty: "No viewings in the last 30 days." },
+    { key: "all", title: "By date", rows: history, empty: "No viewings in this period.", hideCount: true },
   ];
   const cur = sections.find((x) => x.key === tab) ?? sections[0];
-  const href = (t: string, m: boolean) => `/viewings?${new URLSearchParams({ ...(t !== "follow" ? { tab: t } : {}), ...(m ? { mine: "1" } : {}) })}`;
+  const href = (t: string, m: boolean) => `/viewings?${new URLSearchParams({ ...(t !== "follow" ? { tab: t } : {}), ...(m ? { mine: "1" } : {}), ...(t === "all" && sp.range ? { range: one(sp.range), ...(one(sp.from) ? { from: one(sp.from) } : {}), ...(one(sp.to) ? { to: one(sp.to) } : {}) } : {}) })}`;
+  const byOutcome = [...new Set(history.map((v) => v.outcome))].map((o) => [o, history.filter((v) => v.outcome === o).length] as const).sort((a, b) => b[1] - a[1]);
 
   return (
     <>
       <nav className="chips section-jump" aria-label="Viewing lists">
         {sections.map((x) => (
           <Link key={x.key} href={href(x.key, mine)} className={`chip-btn${x.key === cur.key ? " on" : ""}`} aria-current={x.key === cur.key ? "page" : undefined} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
-            {x.title} ({x.rows.length})
+            {x.title}{"hideCount" in x ? "" : ` (${x.rows.length})`}
           </Link>
         ))}
       </nav>
@@ -104,8 +114,15 @@ async function Viewings({ searchParams }: { searchParams: Promise<SP> }) {
         </div>
         <span className="muted">{outcomeLabel("pending")} viewings in the past count as completed for the lead&apos;s stage.</span>
       </div>
+      {cur.key === "all" && <DateRangeFilter path="/viewings" range={r} keep={{ tab: "all", ...(mine ? { mine: "1" } : {}) }} />}
+      {cur.key === "all" && history.length > 0 && (
+        <div className="kpis" style={{ margin: 0 }}>
+          <div className="kpi"><span>Viewings · {r.label}</span><b>{history.length}</b></div>
+          {byOutcome.slice(0, 4).map(([o, n]) => <div key={o} className="kpi"><span>{outcomeLabel(o)}</span><b>{n}</b></div>)}
+        </div>
+      )}
       <section className="panel">
-        <h2 className="section-title">{cur.title} ({cur.rows.length})</h2>
+        <h2 className="section-title">{cur.key === "all" ? `Viewings · ${r.label}` : cur.title} ({cur.rows.length}{cur.key === "all" && cur.rows.length === 2000 ? "+" : ""})</h2>
         <Table rows={cur.rows} empty={cur.empty} showFollow={cur.showFollow} />
       </section>
     </>

@@ -280,3 +280,11 @@ button.picker-row:hover, button.picker-row:focus-visible { background: var(--car
 .hbar-track i { display: block; height: 100%; background: var(--red); border-radius: 0 4px 4px 0; }
 .hbar-value { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
 .chart-scroll { overflow-x: auto; }
+
+/* Date range filter */
+.range-filter { display: flex; flex-direction: column; gap: 8px; }
+a.chip-btn { text-decoration: none; display: inline-flex; align-items: center; }
+.range-custom { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+.range-custom label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.range-custom input[type="date"] { min-height: 36px; padding: 4px 8px; width: auto; }
+.range-label { font-size: 13px; }
