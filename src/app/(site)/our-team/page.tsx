@@ -28,7 +28,7 @@ async function Team() {
       <Banner eyebrow="Our Team" h1="Meet the Axe Realty team" />
       <Crumbs items={[{ href: "/", label: "Home" }, { label: "Our Team" }]} />
       <section className="wrap section" style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        <p className="lead" style={{ maxWidth: 760 }}>
+        <p className="lead">
           A small, focused team that knows Colombo&apos;s apartment buildings inside out. Message any of us directly; you&apos;ll deal with the same person from the first viewing to handover.
         </p>
         {people.length ? <TeamCards people={people} /> : (

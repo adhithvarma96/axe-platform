@@ -66,8 +66,8 @@ async function About() {
               </div>
             ))}
           </div>
-          <p style={{ maxWidth: 760 }}>As the Colombo property market grows more complex, we aim to simplify it, without ever dumbing it down.</p>
           <Stats />
+          <p style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>As the Colombo property market grows more complex, we aim to simplify it, without ever dumbing it down.</p>
         </div>
       </section>
 
@@ -90,7 +90,7 @@ async function About() {
         </section>
       )}
 
-      <Reviews items={revs} />
+      <Reviews items={revs} stats={false} />
       <CtaBand title="Looking for an apartment in Colombo?" text="Tell us what you need and we'll send you options that match, usually the same day." />
     </>
   );

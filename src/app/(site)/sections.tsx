@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { WebReview, WebTeamMember } from "@/lib/site/data";
 import { SITE } from "@/lib/site/listing";
 import { Icon, ICON } from "./components";
+import { ReviewCarousel } from "./review-carousel";
 
 export const WHY: { icon: keyof typeof ICON; title: string; text: string }[] = [
   { icon: "target", title: "100% focused on Colombo apartments", text: "No distractions: apartments in Colombo are all we do, so we know every building and what it really rents and sells for." },
@@ -72,7 +73,7 @@ const GoogleG = () => (
   </svg>
 );
 
-export function Reviews({ items }: { items: WebReview[] }) {
+export function Reviews({ items, stats = true }: { items: WebReview[]; stats?: boolean }) {
   if (!items.length) return null;
   const avg = items.reduce((s, r) => s + (r.rating ?? 5), 0) / items.length;
   const ago = (d: string | null) => d ? new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }) : "";
@@ -93,7 +94,7 @@ export function Reviews({ items }: { items: WebReview[] }) {
             <a href={SITE.googleReviews} target="_blank" rel="noopener">Read all on Google</a>
           </div>
         </div>
-        <div className="reviews-row" role="list">
+        <ReviewCarousel>
           {items.map((r) => (
             <figure key={`${r.reviewer_name}-${r.review_date}`} className="review" role="listitem">
               <div className="review-top">
@@ -108,8 +109,8 @@ export function Reviews({ items }: { items: WebReview[] }) {
               <blockquote className="review-body">{r.body}</blockquote>
             </figure>
           ))}
-        </div>
-        <Stats />
+        </ReviewCarousel>
+        {stats && <Stats />}
       </div>
     </section>
   );

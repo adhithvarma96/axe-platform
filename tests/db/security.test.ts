@@ -469,7 +469,7 @@ describe("public website allow-list", () => {
     "built_up_area_sqft", "number_of_floors", "garden", "pool", "sea_view", "total_floor_area_sqft",
     "commercial_sub_category", "location_name", "location_slug", "market_tier", "development_name",
     "development_slug", "features", "cover", "photos", "agent_name", "agent_whatsapp", "published_at", "updated_at",
-    "coming_soon", "agent_photo", "agent_title", "tower_name",
+    "coming_soon", "agent_photo", "agent_title", "tower_name", "agent_email",
   ].sort();
   let pubId: string;
 

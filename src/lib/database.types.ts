@@ -3913,6 +3913,7 @@ export type Database = {
           status: Database["public"]["Enums"]["property_status"] | null
           total_floor_area_sqft: number | null
           updated_at: string | null
+          agent_email: string | null
           agent_photo: Json | null
           agent_title: string | null
           coming_soon: boolean | null
