@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label, priceLines } from "@/lib/format";
+import { Combo } from "../combo";
 
 const PAGE = 50;
 const STATUSES = ["available", "reserved", "rented", "sold", "withdrawn"] as const;
@@ -169,10 +170,7 @@ async function PropertyList({ searchParams }: { searchParams: Promise<SP> }) {
           <div className="filters" style={{ padding: 0, border: 0, background: "none", marginTop: 12 }}>
             <div className="field">
               <label htmlFor="development">Development</label>
-              <select id="development" name="development" defaultValue={f.development}>
-                <option value="">Any</option>
-                {(devQ.data ?? []).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <Combo id="development" name="development" defaultValue={f.development} emptyLabel="Any" placeholder="Type a development" options={(devQ.data ?? []).map((d) => ({ id: d.id, name: d.name }))} />
             </div>
             <div className="field"><label htmlFor="tower">Tower</label><input id="tower" name="tower" defaultValue={f.tower} placeholder="e.g. Tower 2, Melford" /></div>
             <div className="field" style={{ flex: "0 1 130px" }}><label htmlFor="unit">Unit no</label><input id="unit" name="unit" defaultValue={f.unit} placeholder="e.g. 2304" /></div>
@@ -187,10 +185,7 @@ async function PropertyList({ searchParams }: { searchParams: Promise<SP> }) {
             </div>
             <div className="field">
               <label htmlFor="via">Sourced via external agent</label>
-              <select id="via" name="via" defaultValue={f.via}>
-                <option value="">Any</option>
-                {(extQ.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.agent_name}{a.company ? ` (${a.company})` : ""}</option>)}
-              </select>
+              <Combo id="via" name="via" defaultValue={f.via} emptyLabel="Any" placeholder="Type an agent or company" options={(extQ.data ?? []).map((a) => ({ id: a.id, name: a.agent_name, hint: a.company ?? undefined }))} />
             </div>
             <div className="field" style={{ flex: "0 1 220px" }}>
               <span className="flabel-sm">Size (sq ft)</span>

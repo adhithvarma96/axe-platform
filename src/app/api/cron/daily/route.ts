@@ -7,6 +7,7 @@ import { addDays, needsFollowUp, today } from "@/lib/crm";
 //   1. each agent gets their follow-ups (viewings pending 2+ days, tasks due) in the
 //      inbox and by email, skipped on their day off (SPEC 7.6, 13)
 //   2. Adhith hears about referral agreements expiring in 30 days (13)
+//   0. (first) rented units whose next available date has come turn Available (7.3)
 // Safe to run twice: an agent's digest is sent at most once a day.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -21,6 +22,24 @@ export async function GET(request: Request) {
     const on = today();
     const weekday = new Date(`${on}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" }).toLowerCase();
     const startOfDay = new Date(`${on}T00:00:00+05:30`).toISOString();
+
+    // 0. Rented units whose next available date has come (SPEC 7.3): Available again, re-market.
+    //    A "Coming soon" listing on the website becomes a normal listing at the same moment.
+    const freedQ = await db.from("properties").select("id, listing_no, listing_agent_id, website_published, development:developments(name)")
+      .eq("status", "rented").lte("next_available_date", on).is("deleted_at", null);
+    if (freedQ.error) throw freedQ.error;
+    const adminsQ = await db.from("agents").select("id, work_email").eq("role", "super_admin").eq("status", "active").is("deleted_at", null);
+    let freed = 0;
+    for (const p of freedQ.data ?? []) {
+      const { error: upErr } = await db.from("properties").update({ status: "available", next_available_date: null, last_made_available: on }).eq("id", p.id).eq("status", "rented");
+      if (upErr) { Sentry.captureException(upErr); continue; }
+      freed++;
+      const dev = (Array.isArray(p.development) ? p.development[0] : p.development) as { name: string } | null;
+      const title = `${p.listing_no} is available again: re-market it`;
+      const body = `${dev?.name ?? "This unit"}'s lease has ended, so it is now Available.${p.website_published ? " Its website listing is no longer marked Coming soon." : " It is not on the website yet."}`;
+      const to = new Set([p.listing_agent_id, ...(adminsQ.data ?? []).map((x) => x.id)].filter(Boolean) as string[]);
+      await db.from("notifications").insert([...to].map((id) => ({ recipient_agent_id: id, kind: "property_available", title, body, link: `/properties/${p.listing_no}/` })));
+    }
 
     const [agentsQ, viewingsQ, tasksQ, sentQ] = await Promise.all([
       db.from("agents").select("id, full_name, work_email, role, weekly_day_off").eq("status", "active").is("deleted_at", null),
@@ -75,7 +94,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return Response.json({ ok: true, digests: sent, expiring: expiring?.length ?? 0 });
+    return Response.json({ ok: true, freed, digests: sent, expiring: expiring?.length ?? 0 });
   } catch (e) {
     Sentry.captureException(e);
     return Response.json({ ok: false, error: (e as Error).message }, { status: 500 });

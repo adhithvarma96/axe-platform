@@ -18,6 +18,7 @@ export default function OwnersPage({ searchParams }: { searchParams: Promise<SP>
           <h1>Owners</h1>
           <p className="muted">Landlords and sellers, with how each prefers to be contacted.</p>
         </div>
+        <Link className="btn" href="/owners/new">+ Add owner</Link>
       </div>
       <Suspense fallback={<p className="muted">Loading owners…</p>}>
         <OwnerList searchParams={searchParams} />

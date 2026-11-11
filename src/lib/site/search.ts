@@ -17,6 +17,7 @@ export interface Filters {
   furn: string;
   sort: "new" | "low" | "high";
   show: number;
+  q: string;
 }
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -40,6 +41,7 @@ export function parseFilters(sp: SP): Filters {
     furn: one(sp.furn) || "any",
     sort: sort === "low" || sort === "high" ? sort : "new",
     show: Math.min(500, Math.max(12, Number(one(sp.show)) || 12)),
+    q: one(sp.q).trim().slice(0, 80),
   };
 }
 
@@ -52,7 +54,19 @@ export function priceIn(l: WebListing, intent: "sale" | "rent" | "all", cur: "LK
   return v == null ? null : Number(v);
 }
 
+/** Keyword search: reference no, development, tower, area, and words like "penthouse" or "3 bed". Every word must match. */
+export function keywordHit(l: WebListing, q: string): boolean {
+  const words = q.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const hay = [l.listing_no, l.development_name, l.tower_name, l.location_name, l.location_slug?.replace(/-/g, " "),
+    ...(l.features ?? []).map((x) => x.replace(/-/g, " ")), l.beds != null ? `${l.beds} bed ${l.beds}bed ${l.beds} bedroom` : "",
+    l.property_type, (l.listing_types ?? []).some((t) => t.startsWith("rent")) ? "rent rental" : "", (l.listing_types ?? []).includes("sale") ? "sale buy" : ""]
+    .filter(Boolean).join(" ").toLowerCase();
+  return words.every((w) => hay.includes(w) || (w === "colombo" && hay.includes("colombo")));
+}
+
 export function matches(l: WebListing, f: Filters, skip?: "loc"): boolean {
+  if (f.q && !keywordHit(l, f.q)) return false;
   if (f.intent === "rent" && !isRent(l)) return false;
   if (f.intent === "sale" && !isSale(l)) return false;
   if (f.type && l.property_type !== f.type) return false;

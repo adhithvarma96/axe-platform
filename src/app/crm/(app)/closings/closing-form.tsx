@@ -1,4 +1,5 @@
 "use client";
+import { Combo, type ComboOption } from "../combo";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +10,8 @@ import { saveClosing, type FormState } from "./actions";
 export interface ClosingOptions {
   leads: { code: string; label: string; agentId: string | null; model: Model | null; partnerId: string | null }[];
   properties: { no: string; label: string; agentId: string | null; model: Model | null; partnerId: string | null; sqft: number | null }[];
+  leadChoices: ComboOption[];
+  propertyChoices: ComboOption[];
   agents: { id: string; name: string }[];
   externals: { id: string; name: string }[];
   partners: { id: string; name: string }[];
@@ -24,8 +27,8 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
   useEffect(() => { if (state.next) router.push(state.next); }, [state.next, router]);
   const str = (k: string) => (values[k] == null ? "" : String(values[k]));
 
-  const [lead, setLead] = useState(str("lead"));
-  const [prop, setProp] = useState(str("property"));
+  const [lead, setLead] = useState(str("lead").split(/\s/)[0]);
+  const [prop, setProp] = useState(str("property").split(/\s/)[0]);
   const [date, setDate] = useState(str("closing_date"));
   const [dealType, setDealType] = useState(str("deal_type") || "rental");
   const [leadAgent, setLeadAgent] = useState(str("lead_side_agent_id"));
@@ -85,8 +88,6 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
   return (
     <form action={action} className="form-stack">
       {values.id && <input type="hidden" name="id" value={str("id")} />}
-      <datalist id="cl-leads">{options.leads.map((l) => <option key={l.code} value={`${l.code} – ${l.label}`} />)}</datalist>
-      <datalist id="cl-props">{options.properties.map((p) => <option key={p.no} value={`${p.no} – ${p.label}`} />)}</datalist>
 
       <fieldset className="panel form-group">
         <legend className="section-title">The deal</legend>
@@ -97,8 +98,8 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
               <option value="rental">Rental</option><option value="short_let">Short-let</option><option value="sale">Sale</option>
             </select>
           </div>
-          <div className="field" style={{ gridColumn: "1 / -1" }}><label htmlFor="lead">Lead</label><input id="lead" name="lead" list="cl-leads" value={lead} onChange={(e) => pickLead(e.target.value)} placeholder="ARLD… or name" autoComplete="off" /></div>
-          <div className="field" style={{ gridColumn: "1 / -1" }}><label htmlFor="property">Property</label><input id="property" name="property" list="cl-props" value={prop} onChange={(e) => pickProp(e.target.value)} placeholder="AX… or building" autoComplete="off" /></div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}><label htmlFor="lead">Lead</label><Combo id="lead" name="lead" options={options.leadChoices} value={lead} onChange={pickLead} placeholder="Lead name, ARLD code, phone or email" /></div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}><label htmlFor="property">Property</label><Combo id="property" name="property" options={options.propertyChoices} value={prop} onChange={pickProp} placeholder="Listing no, development, unit, owner or area" /></div>
           {dealType !== "sale" && <>
             <div className="field"><label htmlFor="monthly_rent">Monthly rent</label><input id="monthly_rent" name="monthly_rent" inputMode="decimal" value={rent} onChange={(e) => { setRent(e.target.value); setValue(String((Number(e.target.value) || 0) * (Number(term) || 0))); }} /></div>
             <div className="field"><label htmlFor="term">Lease term (months)</label><input id="term" inputMode="numeric" value={term} onChange={(e) => { setTerm(e.target.value); setValue(String((Number(rent) || 0) * (Number(e.target.value) || 0))); }} /></div>

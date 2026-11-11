@@ -75,6 +75,10 @@ async function Results({ searchParams }: Props) {
       <div className="wrap" style={{ paddingTop: 28, paddingBottom: 80, display: "flex", flexWrap: "wrap", gap: 32, alignItems: "flex-start" }}>
         <details className="filters-panel" open>
           <summary>Filters</summary>
+          <div className="fgroup s-field">
+            <label htmlFor="fq" className="flabel">Keyword</label>
+            <input id="fq" name="q" type="search" defaultValue={f.q} placeholder="Ref no, building, tower or area" />
+          </div>
           {/* Only shown once the website carries more than one property type (Settings: website_property_types). */}
           {TYPES.filter(([v]) => typeCounts.has(v)).length > 1 && (
             <div className="fgroup">

@@ -7,7 +7,7 @@ import { SITE } from "@/lib/site/listing";
 const STATIC: [string, number][] = [
   ["/", 1], ["/properties/", 0.9], ["/apartments-for-sale-rent/", 0.9], ["/apartments-for-rent/", 0.8],
   ["/apartments-for-sale/", 0.8], ["/list-your-property/", 0.7], ["/colombo-apartment-report/", 0.6],
-  ["/about-us/", 0.5], ["/contact-us/", 0.5], ["/privacy-policy/", 0.2],
+  ["/about-us/", 0.5], ["/our-team/", 0.5], ["/contact-us/", 0.5], ["/privacy-policy/", 0.2],
 ];
 const LIFESTYLE = ["sea-view", "penthouse", "duplex", "pet-friendly"];
 

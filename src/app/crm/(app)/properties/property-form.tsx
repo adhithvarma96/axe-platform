@@ -3,10 +3,12 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { groupsFor, LISTING_TYPES, type Field } from "@/lib/property-fields";
+import { Combo } from "../combo";
+import { NewOwner } from "../owners/new-owner";
 import { label } from "@/lib/format";
 import { saveProperty, type FormState } from "./actions";
 
-export interface Option { id: string; name: string; development_id?: string }
+export interface Option { id: string; name: string; development_id?: string; hint?: string }
 export interface FormOptions {
   locations: Option[]; developments: Option[]; towers: Option[]; owners: Option[];
   agents: Option[]; referral_partners: Option[]; source_channels: Option[]; features: Option[]; external_agents: Option[];
@@ -20,6 +22,9 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
   useEffect(() => { if (state.next) router.push(state.next); }, [state.next, router]);
   const [type, setType] = useState(String(values.property_type ?? "apartment"));
   const [dev, setDev] = useState(String(values.development_id ?? ""));
+  const [tower, setTower] = useState(String(values.tower_id ?? ""));
+  const [owners, setOwners] = useState(options.owners);
+  const [owner, setOwner] = useState(String(values.owner_id ?? ""));
   const v = (n: string) => values[n];
 
   function input(f: Field) {
@@ -47,17 +52,18 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
     } else if (f.kind === "ref") {
       let list = options[f.ref as keyof FormOptions] ?? [];
       if (f.ref === "towers") list = list.filter((t) => t.development_id === dev);
-      control = (
-        <select
-          {...common}
-          defaultValue={String(v(f.name) ?? "")}
-          key={f.ref === "towers" ? `towers-${dev}` : f.name}
-          onChange={f.ref === "developments" ? (e) => setDev(e.target.value) : undefined}
-          disabled={f.adminOnly && !isAdmin}
-        >
-          <option value="">{f.ref === "towers" && !dev ? "Choose a development first" : "—"}</option>
-          {list.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-        </select>
+      if (f.ref === "owners") list = owners;
+      const opts = list.map((o) => ({ id: o.id, name: o.name, hint: o.hint }));
+      control = f.ref === "towers" ? (
+        <Combo id={id} name={f.name} options={opts} value={tower} onChange={setTower} disabled={!dev}
+          placeholder={dev ? (opts.length ? "Type a tower" : "This development has no towers") : "Choose a development first"} />
+      ) : f.ref === "developments" ? (
+        <Combo id={id} name={f.name} options={opts} value={dev} onChange={(x) => { setDev(x); setTower(""); }} placeholder="Type a development" />
+      ) : f.ref === "owners" ? (
+        <Combo id={id} name={f.name} options={opts} value={owner} onChange={setOwner} placeholder="Type an owner's name or phone"
+          footer={<NewOwner onCreated={(o) => { setOwners((prev) => [{ id: o.id, name: o.name, hint: o.hint }, ...prev]); setOwner(o.id); }} />} />
+      ) : (
+        <Combo id={id} name={f.name} options={opts} defaultValue={String(v(f.name) ?? "")} disabled={f.adminOnly && !isAdmin} placeholder="Type to search" />
       );
     } else if (f.kind === "textarea") {
       control = <textarea {...common} defaultValue={String(v(f.name) ?? "")} rows={4} />;
@@ -68,6 +74,9 @@ export function PropertyForm({ values, options, featureIds, isAdmin, cancelHref 
           defaultValue={v(f.name) == null ? "" : String(v(f.name)).slice(0, f.kind === "date" ? 10 : undefined)}
           disabled={f.adminOnly && !isAdmin} />
       );
+    }
+    if (f.name === "building_name" && dev) {
+      return <input key={f.name} type="hidden" name={f.name} value={String(v(f.name) ?? "")} />;
     }
     return (
       <div key={f.name} className="field" style={f.kind === "textarea" ? { gridColumn: "1 / -1" } : undefined}>

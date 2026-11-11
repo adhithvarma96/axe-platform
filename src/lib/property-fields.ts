@@ -44,7 +44,7 @@ export const GROUPS: Group[] = [
       { name: "tower_id", label: "Tower", kind: "ref", ref: "towers", help: "Only the chosen development's towers" },
       { name: "unit_number", label: "Unit number", kind: "text", help: "Internal only, never shown on the website" },
       { name: "floor", label: "Floor", kind: "text", help: "Internal only" },
-      { name: "building_name", label: "Building name", kind: "text" },
+      { name: "building_name", label: "Building name", kind: "text", help: "For buildings that aren't a development in the list" },
     ],
   },
   {
@@ -65,8 +65,7 @@ export const GROUPS: Group[] = [
       { name: "asking_sale_price", label: "Asking sale price", kind: "number" },
       { name: "sale_currency", label: "Sale currency", kind: "enum", options: CURRENCY },
       { name: "price_on_request", label: "Price on request (hide price on website)", kind: "bool" },
-      { name: "available_from", label: "Available from", kind: "date" },
-      { name: "next_available_date", label: "Next available", kind: "date" },
+      { name: "next_available_date", label: "Next available", kind: "date", help: "For a rented unit: the day it frees up. It turns Available automatically that morning." },
       { name: "last_verified", label: "Last verified", kind: "date", help: "Date someone last confirmed it's still on the market" },
     ],
   },

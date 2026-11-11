@@ -4,19 +4,23 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { label, priceLines } from "@/lib/format";
+import { label } from "@/lib/format";
 import { WebsiteImage } from "../../website-image";
 import { ClosingHistory } from "../../closings/history";
+import { AdminDelete } from "../../bin/admin-delete";
+import { ScopedProperties } from "../../properties/scoped-list";
 
-export default function DevelopmentPage({ params }: { params: Promise<{ id: string }> }) {
+type SP = Record<string, string | string[] | undefined>;
+
+export default function DevelopmentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
   return (
     <Suspense fallback={<p className="muted">Loading…</p>}>
-      <Development params={params} />
+      <Development params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function Development({ params }: { params: Promise<{ id: string }> }) {
+async function Development({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
   await connection();
   await requireUser();
   const { id } = await params;
@@ -24,13 +28,12 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { data: d } = await supabase
     .from("developments")
-    .select(`*, location:locations(name), towers:development_towers(id, name),
-      properties(listing_no, status, beds, square_feet, asking_rent, rent_currency, asking_sale_price, sale_currency, tower:development_towers(name))`)
+    .select(`*, location:locations(name), towers:development_towers(id, name)`)
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
   if (!d) notFound();
-  const props = (d.properties ?? []).sort((a, b) => (a.listing_no ?? "").localeCompare(b.listing_no ?? ""));
+  const sp = await searchParams;
   const facts: [string, React.ReactNode][] = [
     ["Location", d.location?.name], ["Developer", d.developer_builder], ["Status", label(d.development_status)],
     ["Completed", d.year_completed], ["Total units", d.total_units], ["Towers / blocks", d.towers_blocks],
@@ -40,7 +43,7 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/developments">Developments</Link> › {d.name}</nav>
-      <div className="page-head"><h1>{d.name}</h1></div>
+      <div className="page-head"><h1>{d.name}</h1><AdminDelete table="developments" id={d.id} what={d.name} /></div>
       <div className="grid-2">
         <section className="panel">
           <h2 className="section-title">Details</h2>
@@ -49,7 +52,7 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
         </section>
         <section className="panel">
           <h2 className="section-title">Website image</h2>
-          <WebsiteImage kind="development" id={d.id} url={(d.website_image as Record<string, { url: string }> | null)?.["800"]?.url ?? null}
+          <WebsiteImage kind="development" id={d.id} image={d.website_image} ideal="tile"
             hint="A photo of the building itself. Used on its tile on the home page and hub." />
         </section>
         <section className="panel">
@@ -57,28 +60,7 @@ async function Development({ params }: { params: Promise<{ id: string }> }) {
           {d.towers?.length ? <p>{d.towers.map((t) => t.name).sort().join(" · ")}</p> : <p className="muted">No towers recorded.</p>}
         </section>
       </div>
-      <section className="panel">
-        <h2 className="section-title">Properties ({props.length})</h2>
-        {props.length ? (
-          <div className="table-wrap" style={{ border: 0 }}>
-            <table className="table">
-              <thead><tr><th scope="col">Listing</th><th scope="col">Tower</th><th scope="col">Beds</th><th scope="col">Sq ft</th><th scope="col">Price</th><th scope="col">Status</th></tr></thead>
-              <tbody>
-                {props.map((p) => (
-                  <tr key={p.listing_no}>
-                    <td><Link href={`/properties/${p.listing_no}`} style={{ fontWeight: 700 }}>{p.listing_no}</Link></td>
-                    <td>{p.tower?.name ?? ""}</td>
-                    <td>{p.beds ?? "–"}</td>
-                    <td>{p.square_feet ? Math.round(p.square_feet).toLocaleString() : ""}</td>
-                    <td>{priceLines(p).join(" · ")}</td>
-                    <td><span className={`badge badge-${p.status}`}>{label(p.status)}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : <p className="muted">No properties in this development yet.</p>}
-      </section>
+      <ScopedProperties col="development_id" id={d.id} sp={sp} path={`/developments/${d.id}`} />
       <ClosingHistory by="development" id={id} />
     </>
   );

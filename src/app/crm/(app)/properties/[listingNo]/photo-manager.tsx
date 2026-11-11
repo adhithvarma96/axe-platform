@@ -1,4 +1,5 @@
 "use client";
+import { IDEAL } from "@/lib/photos/preview";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deletePhoto, movePhoto, setCover, setPhotoPublic } from "../actions";
@@ -72,6 +73,7 @@ export function PhotoManager({ propertyId, listingNo, photos, isAdmin }: { prope
           <input ref={input} type="file" accept="image/*" multiple onChange={(e) => upload(e.target.files)} className="sr-only" />
         </label>
       </div>
+      <p className="muted" style={{ fontSize: 12, margin: "0 0 10px" }}><b style={{ color: "var(--ink)" }}>Ideal size:</b> {IDEAL.listing.text}. The first photo is the cover on the website and in WhatsApp shares.</p>
       {progress && <p className="muted" role="status" style={{ fontSize: 13, marginBottom: 10 }}>{progress}</p>}
       {error && <p className="error" role="alert" style={{ marginBottom: 10 }}>{error}</p>}
       {photos.length ? (

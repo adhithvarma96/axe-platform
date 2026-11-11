@@ -6,20 +6,29 @@ import { featureLabel, headlinePrice, intentLabel, listingPath, listingTitle, SI
 export function SiteHeader({ variant = "solid" }: { variant?: "solid" | "hero" }) {
   return (
     <header className={`s-header ${variant === "solid" ? "s-header-solid" : ""}`}>
-      <div className="wrap s-header-top">
-        <span>Colombo&apos;s apartment specialists</span>
-        <span style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-          <a href={`https://wa.me/${SITE.whatsapp}`}>WhatsApp {SITE.phone}</a>
-          <span>{SITE.email}</span>
-        </span>
+      <div className="s-header-top-band">
+        <div className="wrap s-header-top">
+          <div className="s-top-left">
+            <span className="s-social">
+              {SITE.social.map(([name, href]) => (
+                <a key={name} href={href} target="_blank" rel="noopener" aria-label={`Axe Realty on ${name}`}><SocialIcon name={name} /></a>
+              ))}
+            </span>
+            <span className="s-top-sep" aria-hidden="true" />
+            <a href={`https://wa.me/${SITE.whatsapp}`} className="s-top-item"><Icon d={ICON.phone} size={15} />{SITE.phone}</a>
+          </div>
+          <a href={`mailto:${SITE.email}`} className="s-top-item"><Icon d={ICON.mail} size={15} />{SITE.email}</a>
+        </div>
       </div>
       <div className="wrap s-header-main">
-        <Link href="/" aria-label="Axe Realty home" style={{ lineHeight: 0 }}>
+        <Link href="/" aria-label="Axe Realty home" className="s-logo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/axe-realty-logo.png" alt="Axe Realty" width={173} height={52} style={{ height: 52, width: "auto" }} />
         </Link>
         <nav className="s-nav" aria-label="Main">
           <Link href="/">Home</Link>
+          <Link href="/about-us/">About Us</Link>
+          <Link href="/our-team/">Our Team</Link>
           <Link href="/apartments-for-sale-rent/">Apartments</Link>
           <Link href="/properties/">All Properties</Link>
           <Link href="/list-your-property/">List Your Property</Link>
@@ -85,7 +94,27 @@ export function WhatsAppFloat() {
 export const Icon = ({ d, size = 16 }: { d: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
 );
+export function SocialIcon({ name }: { name: string }) {
+  const p: Record<string, React.ReactNode> = {
+    Facebook: <path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H8v4h2v8h4v-8h3l1-4h-4V8.5c0-.3.2-.5.5-.5z" fill="currentColor" stroke="none" />,
+    Instagram: <><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none" /></>,
+    TikTok: <path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5M14 3c.4 2.6 2.2 4.4 5 4.6" />,
+    YouTube: <><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="M10.5 9.3v5.4l4.6-2.7z" fill="currentColor" stroke="none" /></>,
+    LinkedIn: <><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 10.5V16M8 7.8v.1M11.5 16v-5.5M11.5 13c0-1.6 1-2.6 2.3-2.6s2.2.9 2.2 2.6V16" /></>,
+  };
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p[name]}</svg>;
+}
+
 export const ICON = {
+  phone: "M5 4h3.5l1.5 4-2 1.5a11 11 0 0 0 6.5 6.5L16 14l4 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z",
+  mail: "M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7",
+  star: "M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 12h.01",
+  map: "M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6zM9 4v14M15 6v14",
+  shield: "M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z",
+  chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  handshake: "M3 12l4-4 4 2 3-2 3 1 4 3M7 8v6l4 4 2-1 3 2 4-4M11 18l-2-2",
   bed: "M3 18V7M3 13h18v5M21 18v-3M7 13v-2.5A1.5 1.5 0 0 1 8.5 9h3A1.5 1.5 0 0 1 13 10.5V13",
   bath: "M4 12h16v2.5A4.5 4.5 0 0 1 15.5 19h-7A4.5 4.5 0 0 1 4 14.5zM6 12V6a2 2 0 0 1 3.7-1M7 19l-1 2M17 19l1 2",
   area: "M4 4h16v16H4zM4 9h5V4M15 20v-5h5",
@@ -113,6 +142,7 @@ export function ListingCard({ l, intent }: { l: WebListing; intent?: "rent" | "s
         ) : null}
         <span className="l-chip"><i aria-hidden="true" />{intentLabel(l)}</span>
         {l.status === "reserved" && <span className="l-chip l-chip-hold"><i aria-hidden="true" />Reserved</span>}
+        {l.coming_soon && l.available_from && <span className="l-chip l-chip-soon"><i aria-hidden="true" />Coming soon · {new Date(`${l.available_from}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}</span>}
       </Link>
       <div className="l-card-body">
         <div className="l-card-head">

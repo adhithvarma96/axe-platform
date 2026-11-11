@@ -288,3 +288,24 @@ a.chip-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .range-custom label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
 .range-custom input[type="date"] { min-height: 36px; padding: 4px 8px; width: auto; }
 .range-label { font-size: 13px; }
+
+/* Type-to-search select */
+.combo { position: relative; }
+.combo > input[role="combobox"] { width: 100%; }
+.combo-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); max-height: 300px; overflow-y: auto; }
+.combo-opt { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 14px; }
+.combo-opt.on { background: var(--card); }
+.combo-opt[aria-selected="true"] span:first-child { font-weight: 700; }
+.combo-opt small { font-size: 12px; }
+.combo-none { padding: 8px 10px; font-size: 13px; }
+.combo-footer { border-top: 1px solid var(--line); margin-top: 4px; padding: 6px 4px 2px; }
+
+/* Delete (Super Admin) */
+.btn-danger { color: #b3261e; }
+.btn-danger-solid { background: #b3261e; border-color: #b3261e; color: #fff; }
+.delete-box { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid #f3c2c3; background: #fdf3f3; border-radius: 10px; font-size: 13px; max-width: 360px; color: var(--text); }
+
+/* Dashboard: agents' revenue */
+.agent-rev { display: flex; flex-direction: column; gap: 10px; }
+.agent-rev-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(140px, 1.2fr) 2fr; gap: 12px; align-items: center; font-size: 14px; }
+@media (max-width: 640px) { .agent-rev-row { grid-template-columns: 1fr 1fr; } .agent-rev-row .meter { grid-column: 1 / -1; } }

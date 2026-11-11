@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { processPhoto } from "@/lib/photos/pipeline";
 import { deletePhotoFiles, photoStoreFromEnv, uploadPhoto } from "@/lib/photos/storage";
 
-const TABLES = { location: "locations", development: "developments", page: "site_pages" } as const;
+const TABLES = { location: "locations", development: "developments", page: "site_pages", agent: "agents" } as const;
+const COLUMN = { location: "website_image", development: "website_image", page: "website_image", agent: "public_photo" } as const;
 type Kind = keyof typeof TABLES;
 
 export async function POST(request: Request) {
@@ -22,11 +23,14 @@ export async function POST(request: Request) {
   const key = kind === "page" ? "path" : "id";
   if (kind !== "page" && !/^[0-9a-f-]{36}$/.test(id)) return Response.json({ error: "Bad id" }, { status: 400 });
 
-  const { data: current } = await supabase.from(table as "locations").select("website_image").eq(key as "id", id).maybeSingle();
+  const col = COLUMN[kind];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: current } = await (supabase.from(table as "locations") as any).select(col).eq(key, id).maybeSingle();
   if (!current) return Response.json({ error: "Not found" }, { status: 404 });
-  const oldKeys = Object.values((current.website_image ?? {}) as Record<string, { key?: string }>).map((v) => v.key).filter(Boolean) as string[];
+  const oldKeys = Object.values((current[col] ?? {}) as Record<string, { key?: string }>).map((v) => v.key).filter(Boolean) as string[];
 
   let variants = null;
+  let width: number | null = null;
   if (!remove) {
     const file = form.get("photo");
     if (!(file instanceof File)) return Response.json({ error: "No photo" }, { status: 400 });
@@ -36,10 +40,12 @@ export async function POST(request: Request) {
     catch { return Response.json({ error: "That file isn't a photo we can read" }, { status: 415 }); }
     const folder = kind === "page" ? `page${id.replace(/[^a-z0-9]+/gi, "-")}`.replace(/-+$/, "") || "page-home" : id;
     variants = await uploadPhoto(photoStoreFromEnv(), `website/${kind}/${folder}`, photo);
+    width = Math.max(0, ...Object.values(variants as Record<string, { width?: number }>).map((v) => v?.width ?? 0)) || null;
   }
 
-  const { data: updated, error } = await supabase.from(table as "locations").update({ website_image: variants }).eq(key as "id", id).select("website_image").maybeSingle();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: updated, error } = await (supabase.from(table as "locations") as any).update({ [col]: variants }).eq(key, id).select(col).maybeSingle();
   if (error || !updated) return Response.json({ error: error?.message ?? "You don't have permission to change this image." }, { status: 403 });
   await deletePhotoFiles(photoStoreFromEnv(), oldKeys).catch(() => {}); // replaced files are no longer needed
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, width });
 }

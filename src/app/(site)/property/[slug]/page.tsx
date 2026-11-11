@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { allListings, listingBySlug, listingByNo, sizes, type WebListing } from "@/lib/site/data";
 import { OLD_LISTINGS } from "@/lib/site/old-listings";
-import { featureLabel, headlinePrice, intentLabel, isRent, isSale, listingPath, listingTitle, SITE, typeNoun, waLink } from "@/lib/site/listing";
+import { featureLabel, headlinePrice, intentLabel, isRent, isSale, listingPath, listingTitle, SITE, typeNoun } from "@/lib/site/listing";
 import { date, label, money } from "@/lib/format";
 import { Icon, ICON, ListingCard, SiteHeader } from "../../components";
 import { Gallery } from "../../gallery";
@@ -83,7 +83,7 @@ async function Listing({ params }: Props) {
   ].filter(Boolean) as { k: string; v: string }[];
   // Listing agent's public WhatsApp when set in the CRM, else the company line.
   const agentName = l.agent_name ?? "Axe Realty";
-  const agentWa = (l.agent_name && l.agent_whatsapp?.replace(/\D/g, "")) || SITE.whatsapp;
+  const agentPhoto = ((l.agent_photo ?? null) as Record<string, { url: string }> | null)?.["400"]?.url ?? null;
   const agentPhone = l.agent_name && l.agent_whatsapp ? l.agent_whatsapp : SITE.phone;
   const initials = agentName.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -103,7 +103,7 @@ async function Listing({ params }: Props) {
       <section className="wrap" style={{ paddingTop: 22, display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="p-head">
           <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0, flex: "1 1 480px" }}>
-            <span className="eyebrow-dot">{intentLabel(l)}{l.status === "reserved" ? " · Reserved" : ""} · Ref {l.listing_no}</span>
+            <span className="eyebrow-dot">{intentLabel(l)}{l.status === "reserved" ? " · Reserved" : ""}{l.coming_soon ? ` · Coming soon, available ${availableFrom}` : ""} · Ref {l.listing_no}</span>
             <h1 className="p-title">{h1}</h1>
             <span className="p-sub">
               <Icon d={ICON.pin} size={14} />
@@ -160,17 +160,20 @@ async function Listing({ params }: Props) {
             <div className="agent-card">
               <span className="agent-k">Listing advisor</span>
               <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                <span className="agent-avatar" aria-hidden="true">{initials}</span>
+                {agentPhoto && l.agent_name
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img className="agent-avatar" src={agentPhoto} alt={agentName} width={56} height={56} style={{ objectFit: "cover" }} />
+                  : <span className="agent-avatar" aria-hidden="true">{initials}</span>}
                 <div style={{ minWidth: 0 }}>
                   <div className="agent-name">{agentName}</div>
-                  <div className="agent-role">{l.agent_name ? "Axe Realty" : "Colombo's apartment specialists"}</div>
+                  <div className="agent-role">{l.agent_name ? (l.agent_title ? `${l.agent_title}, Axe Realty` : "Axe Realty") : "Colombo's apartment specialists"}</div>
                 </div>
               </div>
               <div className="agent-lines">
                 <span>{agentPhone} (WhatsApp)</span>
                 <span>{SITE.email}</span>
               </div>
-              <a className="s-btn" href={waLink(intro, agentWa)}>WhatsApp about {l.listing_no}</a>
+              <a className="s-btn" href={`/api/wa/?l=${l.listing_no}&from=property`} rel="nofollow">WhatsApp about {l.listing_no}</a>
             </div>
             <div id="enquire" className="enquire-card">
               <h2 style={{ fontSize: 22 }}>Book a viewing</h2>

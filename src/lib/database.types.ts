@@ -212,13 +212,19 @@ export type Database = {
           deleted_at: string | null
           full_name: string
           id: string
+          public_bio: string | null
+          public_email: string | null
           public_name: string | null
+          public_photo: Json | null
+          public_title: string | null
           public_whatsapp: string | null
           role: Database["public"]["Enums"]["agent_role"]
+          show_on_website: boolean
           status: Database["public"]["Enums"]["agent_status"]
           updated_at: string
           updated_by: string | null
           user_id: string | null
+          website_sort: number
           weekly_day_off: Database["public"]["Enums"]["weekday"] | null
           work_email: string | null
         }
@@ -230,13 +236,19 @@ export type Database = {
           deleted_at?: string | null
           full_name: string
           id?: string
+          public_bio?: string | null
+          public_email?: string | null
           public_name?: string | null
+          public_photo?: Json | null
+          public_title?: string | null
           public_whatsapp?: string | null
           role?: Database["public"]["Enums"]["agent_role"]
+          show_on_website?: boolean
           status?: Database["public"]["Enums"]["agent_status"]
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
+          website_sort?: number
           weekly_day_off?: Database["public"]["Enums"]["weekday"] | null
           work_email?: string | null
         }
@@ -248,13 +260,19 @@ export type Database = {
           deleted_at?: string | null
           full_name?: string
           id?: string
+          public_bio?: string | null
+          public_email?: string | null
           public_name?: string | null
+          public_photo?: Json | null
+          public_title?: string | null
           public_whatsapp?: string | null
           role?: Database["public"]["Enums"]["agent_role"]
+          show_on_website?: boolean
           status?: Database["public"]["Enums"]["agent_status"]
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
+          website_sort?: number
           weekly_day_off?: Database["public"]["Enums"]["weekday"] | null
           work_email?: string | null
         }
@@ -2182,6 +2200,84 @@ export type Database = {
           },
         ]
       }
+      site_reviews: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_published: boolean
+          rating: number
+          review_date: string | null
+          reviewer_name: string
+          sort_order: number
+          source: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_published?: boolean
+          rating?: number
+          review_date?: string | null
+          reviewer_name: string
+          sort_order?: number
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_published?: boolean
+          rating?: number
+          review_date?: string | null
+          reviewer_name?: string
+          sort_order?: number
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_clicks: {
+        Row: {
+          agent_id: string | null
+          clicked_at: string
+          id: string
+          lead_logged_at: string | null
+          listing_no: string | null
+          page: string | null
+          property_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          clicked_at?: string
+          id?: string
+          lead_logged_at?: string | null
+          listing_no?: string | null
+          page?: string | null
+          property_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          clicked_at?: string
+          id?: string
+          lead_logged_at?: string | null
+          listing_no?: string | null
+          page?: string | null
+          property_id?: string | null
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           created_at: string
@@ -3817,6 +3913,10 @@ export type Database = {
           status: Database["public"]["Enums"]["property_status"] | null
           total_floor_area_sqft: number | null
           updated_at: string | null
+          agent_photo: Json | null
+          agent_title: string | null
+          coming_soon: boolean | null
+          tower_name: string | null
         }
         Relationships: []
       }
@@ -3869,6 +3969,29 @@ export type Database = {
           sale_lkr_low: number | null
           scope: string | null
           slug: string | null
+        }
+        Relationships: []
+      }
+      web_reviews: {
+        Row: {
+          body: string | null
+          rating: number | null
+          review_date: string | null
+          reviewer_name: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
+      web_team: {
+        Row: {
+          bio: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          photo: Json | null
+          title: string | null
+          website_sort: number | null
+          whatsapp: string | null
         }
         Relationships: []
       }

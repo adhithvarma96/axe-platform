@@ -9,6 +9,7 @@ import { PhotoManager } from "./photo-manager";
 import { PublishSwitch } from "./publish-switch";
 import { SharePanel } from "./share-panel";
 import { ROLE_TITLE, whatsappWriteup } from "@/lib/whatsapp";
+import { AdminDelete } from "../../bin/admin-delete";
 
 type Variants = Record<string, { url: string; width: number; height: number }>;
 
@@ -101,6 +102,7 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
           <Link className="btn btn-sm" href={`/viewings/new?property=${p.listing_no}`}>+ Log viewing</Link>
           <Link className="btn btn-ghost btn-sm" href={`/properties/${p.listing_no}/edit`}>Edit</Link>
           <PublishSwitch propertyId={p.id} published={p.website_published} />
+          <AdminDelete table="properties" id={p.id} what={p.listing_no ?? "this property"} />
         </div>
       </div>
 

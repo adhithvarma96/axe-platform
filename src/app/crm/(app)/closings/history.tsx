@@ -6,7 +6,7 @@ import { groupStats, usd, type ClosingPoint } from "@/lib/closing-stats";
 /** Closed deals in one development or location, with rent/price per sq ft. Admins only (closings are). */
 export async function ClosingHistory({ by, id }: { by: "development" | "location"; id: string }) {
   const user = await getCurrentUser();
-  if (user?.role !== "super_admin" && user?.role !== "sales_manager") return null;
+  if (user?.role !== "super_admin") return null; // Super Admin only for now (Adhith, 11 Nov)
   const supabase = await createClient();
   const { data } = await supabase.from("closings")
     .select(`closing_no, closing_date, deal_type, monthly_rent_usd, total_deal_value_usd,

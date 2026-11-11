@@ -9,6 +9,14 @@ export const SITE = {
   whatsapp: "94777918396",
   email: "adhith@axerealty.lk",
   address: "No. 95, Horton Place, Colombo 07",
+  social: [
+    ["Facebook", "https://www.facebook.com/axerealtycmb/"],
+    ["Instagram", "https://www.instagram.com/axerealtycmb/"],
+    ["TikTok", "https://www.tiktok.com/@axerealtycmb"],
+    ["YouTube", "https://youtube.com/channel/UCqhS9Xtaz7RzmwL4psD3ZEQ"],
+    ["LinkedIn", "https://www.linkedin.com/company/axerealtycmb"],
+  ] as [string, string][],
+  googleReviews: "https://www.google.com/search?q=Axe+Realty+Colombo+reviews",
 };
 
 const FEATURE_LABEL: Record<string, string> = { penthouse: "Penthouse", duplex: "Duplex", "pet-friendly": "Pet Friendly", "sea-view": "Sea View" };

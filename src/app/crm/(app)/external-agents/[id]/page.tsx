@@ -9,6 +9,7 @@ import { stageLabel, waNumber } from "@/lib/crm";
 import { PartyForm } from "../../party-form";
 import { saveExternalAgent } from "../actions";
 import { EXTERNAL_AGENT_FIELDS } from "../fields";
+import { AdminDelete } from "../../bin/admin-delete";
 
 export default function ExternalAgentPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -40,7 +41,10 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/external-agents">External agents</Link> › {a.agent_name}</nav>
       <div className="page-head">
         <div><h1>{a.agent_name}</h1><p className="muted">{[a.company, a.reliability ? `reliability ${a.reliability}/5` : null].filter(Boolean).join(" · ")}</p></div>
-        {wa && <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {wa && <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
+          <AdminDelete table="external_agents" id={a.id} what={a.agent_name} />
+        </div>
       </div>
       <div className="grid-2">
         <section className="panel">

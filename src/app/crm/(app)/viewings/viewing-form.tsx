@@ -5,12 +5,13 @@ import Link from "next/link";
 import { OUTCOMES, VIEWING_MODELS } from "@/lib/crm";
 import { saveViewing, type FormState } from "./actions";
 import { PropertyPicker } from "./property-picker";
+import { Combo, type ComboOption } from "../combo";
 
 export interface PropertyOption { no: string; label: string; title: string; facts: string; owner: string; status: string; rank: number; search: string }
 
 export interface ViewingOptions {
   properties: PropertyOption[];
-  leads: { code: string; label: string }[];
+  leads: ComboOption[];
   agents: { id: string; name: string }[];
   externals: { id: string; name: string }[];
 }
@@ -28,7 +29,6 @@ export function ViewingForm({ values, options, cancelHref }: { values: Record<st
   return (
     <form action={action} className="form-stack">
       {values.id && <input type="hidden" name="id" value={v("id")} />}
-      <datalist id="leadlist">{options.leads.map((l) => <option key={l.code} value={`${l.code} – ${l.label}`} />)}</datalist>
 
       <div className="panel form-grid">
         <div className="field" style={{ gridColumn: "1 / -1" }}>
@@ -46,7 +46,7 @@ export function ViewingForm({ values, options, cancelHref }: { values: Record<st
             <label htmlFor="lead">Lead *</label>
             {!newLead ? (
               <>
-                <input id="lead" name="lead" list="leadlist" defaultValue={v("lead")} placeholder="Type a name or ARLD…" autoComplete="off" />
+                <Combo id="lead" name="lead" options={options.leads} defaultValue={v("lead").split(/\s/)[0]} placeholder="Lead name, ARLD code, phone or email" />
                 <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => setNewLead(true)}>+ New lead instead</button>
               </>
             ) : (

@@ -18,6 +18,7 @@ const ITEMS: { href: string; label: string; admin?: boolean; superOnly?: boolean
   { href: "/commissions", label: "Commissions", admin: true },
   { href: "/team", label: "Team & targets", admin: true },
   { href: "/website", label: "Website", superOnly: true },
+  { href: "/bin", label: "Deleted bin", superOnly: true },
 ];
 
 export function NavLinks({ admin = false, superAdmin = false, unread = 0 }: { admin?: boolean; superAdmin?: boolean; unread?: number }) {

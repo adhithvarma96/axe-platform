@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { allListings, developments, locations, sitePage, sizes } from "@/lib/site/data";
+import { allListings, developments, locations, reviews, sitePage, sizes } from "@/lib/site/data";
 import { SITE } from "@/lib/site/listing";
 import { ListingCard, SiteHeader } from "./components";
 import { chosen, coverOf, Tiles } from "./place";
+import { Reviews, WhyChoose } from "./sections";
 
 export const metadata: Metadata = {
   title: { absolute: "Apartments for Sale & Rent in Colombo | Axe Realty" },
@@ -12,13 +13,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const WHY = [
-  "100% focused on Colombo apartments, no distractions",
-  "Neighbourhood knowledge that guides smarter decisions",
-  "Curated listings across top developments and locations",
-  "Personalised support through every step of your journey",
-  "Transparent, data-backed insights you can trust",
-];
 const LIFESTYLES = [["penthouse", "Penthouses"], ["duplex", "Duplex Apartments"], ["pet-friendly", "Pet-Friendly"], ["sea-view", "Sea View"]] as const;
 
 export default function Home() {
@@ -30,12 +24,16 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const [all, locs, devs, home, ...lifePages] = await Promise.all([allListings(), locations(), developments(), sitePage("/"),
+  const [all, locs, devs, home, revs, ...lifePages] = await Promise.all([allListings(), locations(), developments(), sitePage("/"), reviews(),
     ...LIFESTYLES.map(([f]) => sitePage(`/lifestyle/${f}-apartments-for-sale-rent/`))]);
   // Hero: the image chosen in the app (Website page), else the newest listing's cover.
   const heroChosen = sizes(home?.image)["2048"] ?? sizes(home?.image)["1600"];
   const hero = heroChosen ?? all.map((l) => sizes(l.cover)["2048"] ?? sizes(l.cover)["1600"]).find(Boolean);
   const featured = all.slice(0, 8);
+  // Why-choose photography: covers from three different buildings
+  const seen = new Set<string>();
+  const whyPhotos = all.filter((l) => { const k = l.development_slug ?? l.listing_no ?? ""; if (seen.has(k)) return false; seen.add(k); return true; })
+    .map((l) => { const c = sizes(l.cover); return (c["1600"] ?? c["800"] ?? c["2048"])?.url; }).filter((u): u is string => !!u).slice(0, 3);
   return (
     <>
       <section className="home-hero" style={{ position: "relative", background: "#2a2f37", display: "flex", flexDirection: "column" }}>
@@ -51,7 +49,7 @@ async function HomeContent() {
             <h1 style={{ color: "#fff", fontSize: "clamp(40px, 6vw, 68px)", lineHeight: 1.05 }}>Apartments in Colombo</h1>
             <form action="/properties/" method="get" style={{ background: "rgba(255,255,255,0.92)", borderRadius: 16, padding: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: 14 }}>
               <div style={{ gridColumn: "1 / -1", display: "flex", gap: 22, flexWrap: "wrap" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 500, color: "var(--ink)" }}><input type="radio" name="intent" value="sale" defaultChecked style={{ width: 18, height: 18, accentColor: "var(--red)" }} /> Apartments for Sale</label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 500, color: "var(--ink)" }}><input type="radio" name="intent" value="sale" style={{ width: 18, height: 18, accentColor: "var(--red)" }} /> Apartments for Sale</label>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 500, color: "var(--ink)" }}><input type="radio" name="intent" value="rent" style={{ width: 18, height: 18, accentColor: "var(--red)" }} /> Apartments for Rent</label>
               </div>
               <div className="s-field"><label htmlFor="hb">Bedrooms</label>
@@ -60,31 +58,16 @@ async function HomeContent() {
               <div className="s-field"><label htmlFor="hl">Location</label>
                 <select id="hl" name="loc" defaultValue=""><option value="">Any location</option>{locs.map((l) => <option key={l.slug} value={l.slug ?? ""}>{l.name}</option>)}</select>
               </div>
+              <div className="s-field" style={{ gridColumn: "1 / -1" }}><label htmlFor="hq">Search by keyword</label>
+                <input id="hq" name="q" type="search" placeholder="Reference no (AX…), development, tower or area" />
+              </div>
               <button type="submit" className="s-btn" style={{ gridColumn: "1 / -1" }}>Search Property</button>
             </form>
           </div>
         </div>
       </section>
 
-      <section className="wrap section" style={{ display: "flex", flexWrap: "wrap", gap: 48, alignItems: "center" }}>
-        <div style={{ flex: "1 1 420px", minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-          <span className="pill" style={{ alignSelf: "flex-start" }}>About Axe Realty</span>
-          <h2 className="h2">Welcome to Axe Realty</h2>
-          <p>Find your ideal apartment in Colombo, whether you&apos;re buying, renting, or listing. At Axe Realty, we specialise exclusively in Colombo apartments, offering a refined portfolio of luxury, brand-new, and investment-ready homes across the city&apos;s most sought-after developments.</p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link className="s-btn" href="/properties/">Explore Listings</Link>
-            <Link className="s-btn s-btn-dark" href="/list-your-property/">List Your Property</Link>
-          </div>
-        </div>
-        <div style={{ flex: "1 1 420px", minWidth: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: 14 }}>
-          {WHY.map((t, i) => (
-            <div key={t} style={{ background: "var(--section)", borderRadius: 10, padding: 20, display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <span style={{ width: 36, height: 36, borderRadius: 8, background: "var(--red)", color: "#fff", display: "grid", placeItems: "center", fontFamily: "var(--font-heading)", fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
-              <span style={{ color: "var(--ink)", fontWeight: 600, lineHeight: 1.4 }}>{t}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <WhyChoose photos={whyPhotos} />
 
       <section style={{ background: "var(--ink)" }} className="section">
         <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -118,6 +101,8 @@ async function HomeContent() {
           <div className="cards">{featured.map((l) => <ListingCard key={l.listing_no} l={l} />)}</div>
         </section>
       )}
+
+      <Reviews items={revs} />
 
       <section className="wrap" style={{ paddingBottom: 72 }}>
         <div style={{ background: "var(--red)", borderRadius: 16, padding: 40, display: "flex", gap: 24, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>

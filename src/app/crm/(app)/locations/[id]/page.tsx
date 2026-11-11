@@ -7,16 +7,20 @@ import { createClient } from "@/lib/supabase/server";
 import { label } from "@/lib/format";
 import { WebsiteImage } from "../../website-image";
 import { ClosingHistory } from "../../closings/history";
+import { AdminDelete } from "../../bin/admin-delete";
+import { ScopedProperties } from "../../properties/scoped-list";
 
-export default function LocationPage({ params }: { params: Promise<{ id: string }> }) {
+type SP = Record<string, string | string[] | undefined>;
+
+export default function LocationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
   return (
     <Suspense fallback={<p className="muted">Loading…</p>}>
-      <Location params={params} />
+      <Location params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function Location({ params }: { params: Promise<{ id: string }> }) {
+async function Location({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
   await connection();
   await requireUser();
   const { id } = await params;
@@ -29,10 +33,11 @@ async function Location({ params }: { params: Promise<{ id: string }> }) {
     .is("deleted_at", null)
     .maybeSingle();
   if (!l) notFound();
+  const sp = await searchParams;
   return (
     <>
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/locations">Locations</Link> › {l.name}</nav>
-      <div className="page-head"><h1>{l.name}</h1></div>
+      <div className="page-head"><h1>{l.name}</h1><AdminDelete table="locations" id={l.id} what={l.name} /></div>
       <div className="grid-2">
         <section className="panel">
           <h2 className="section-title">Details</h2>
@@ -45,7 +50,7 @@ async function Location({ params }: { params: Promise<{ id: string }> }) {
         </section>
         <section className="panel">
           <h2 className="section-title">Website image</h2>
-          <WebsiteImage kind="location" id={l.id} url={(l.website_image as Record<string, { url: string }> | null)?.["800"]?.url ?? null}
+          <WebsiteImage kind="location" id={l.id} image={l.website_image} ideal="tile"
             hint="A landmark or street scene of this area. Used on its tile on the home page and in search." />
         </section>
       </div>
@@ -57,6 +62,7 @@ async function Location({ params }: { params: Promise<{ id: string }> }) {
           ))}</p>
         ) : <p className="muted">None recorded.</p>}
       </section>
+      <ScopedProperties col="location_id" id={l.id} sp={sp} path={`/locations/${l.id}`} showDevelopment />
       <ClosingHistory by="location" id={l.id} />
     </>
   );

@@ -6,7 +6,9 @@ import { ROLE_LABELS } from "./roles";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export type AgentFormData = {
-  id: string; full_name: string; role: string; personal_phone: string | null; work_email: string | null; weekly_day_off: string | null; public_name: string | null; public_whatsapp: string | null;
+  id: string; full_name: string; role: string; personal_phone: string | null;
+  public_title: string | null; public_bio: string | null; public_email: string | null; show_on_website: boolean; website_sort: number;
+  work_email: string | null; weekly_day_off: string | null; public_name: string | null; public_whatsapp: string | null;
   date_joined: string | null; probation_end_date: string | null; commission_exempt: boolean;
   targets: Record<string, number | undefined>;
 };
@@ -39,6 +41,10 @@ export function AgentForm({ a, canEdit }: { a: AgentFormData; canEdit: boolean }
               </select>
             </div>
             <div className="field"><label htmlFor={`pn-${a.id}`}>Name on the website</label><input id={`pn-${a.id}`} name="public_name" defaultValue={a.public_name ?? ""} /></div>
+            <div className="field"><label htmlFor={`pt-${a.id}`}>Job title on the website</label><input id={`pt-${a.id}`} name="public_title" defaultValue={a.public_title ?? ""} placeholder="Property Consultant" /></div>
+            <div className="field"><label htmlFor={`pe-${a.id}`}>Email on the website</label><input id={`pe-${a.id}`} name="public_email" type="email" defaultValue={a.public_email ?? ""} /></div>
+            <div className="field" style={{ gridColumn: "1 / -1" }}><label htmlFor={`pb-${a.id}`}>Bio for the team page</label><textarea id={`pb-${a.id}`} name="public_bio" rows={3} defaultValue={a.public_bio ?? ""} placeholder="2 to 4 sentences: experience, the areas and buildings they know best, languages." /></div>
+            <div className="field"><label htmlFor={`ws-${a.id}`}>Order on the team page</label><input id={`ws-${a.id}`} name="website_sort" inputMode="numeric" defaultValue={a.website_sort} /></div>
             <div className="field"><label htmlFor={`pw-${a.id}`}>WhatsApp on the website</label><input id={`pw-${a.id}`} name="public_whatsapp" defaultValue={a.public_whatsapp ?? ""} placeholder="+94…" /></div>
             <div className="field"><label htmlFor={`j-${a.id}`}>Date joined</label><input id={`j-${a.id}`} name="date_joined" type="date" defaultValue={a.date_joined ?? ""} /></div>
             <div className="field"><label htmlFor={`p-${a.id}`}>Probation ends</label><input id={`p-${a.id}`} name="probation_end_date" type="date" defaultValue={a.probation_end_date ?? ""} /></div>
@@ -46,6 +52,10 @@ export function AgentForm({ a, canEdit }: { a: AgentFormData; canEdit: boolean }
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, marginTop: 10 }}>
             <input type="checkbox" name="commission_exempt" defaultChecked={a.commission_exempt} style={{ width: 18, height: 18, accentColor: "var(--red)" }} />
             Commission-exempt (owner rule: their share goes to Axe)
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, marginTop: 6 }}>
+            <input type="checkbox" name="show_on_website" defaultChecked={a.show_on_website} style={{ width: 18, height: 18, accentColor: "var(--red)" }} />
+            Show on the website&apos;s team page (needs a website name)
           </label>
         </details>
       </fieldset>

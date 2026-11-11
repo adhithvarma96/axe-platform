@@ -3,8 +3,9 @@ import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseProperty } from "@/lib/property-fields";
+import { addDays, today } from "@/lib/crm";
 
-export type FormState = { error?: string; next?: string };
+export type FormState = { error?: string; next?: string; notice?: string };
 
 /** Create or update a property. Permissions are enforced by the database (RLS + triggers). */
 export async function saveProperty(_prev: FormState, form: FormData): Promise<FormState> {
@@ -72,10 +73,11 @@ function friendly(msg: string): string {
 export async function setPublished(propertyId: string, publish: boolean): Promise<FormState> {
   await requireUser();
   const supabase = await createClient();
+  let comingSoon: string | null = null;
   if (publish) {
     const { data: p } = await supabase
       .from("properties")
-      .select("status, property_type, asking_rent, asking_sale_price, price_on_request, listing_types, property_photos(id, is_public, deleted_at)")
+      .select("status, property_type, asking_rent, asking_sale_price, price_on_request, listing_types, next_available_date, property_photos(id, is_public, deleted_at)")
       .eq("id", propertyId)
       .maybeSingle();
     if (!p) return { error: "Property not found." };
@@ -85,7 +87,15 @@ export async function setPublished(propertyId: string, publish: boolean): Promis
       return { error: `Only ${allowed.join(", ")} listings can go on the website for now. (Change "website_property_types" in Settings to open other types.)` };
     }
     const missing: string[] = [];
-    if (!["available", "reserved"].includes(p.status)) missing.push("status must be Available or Reserved");
+    // A rented unit freeing up within 60 days can go up as "Coming soon" (Adhith, 11 Nov 2026).
+    const on = today();
+    const soon = p.status === "rented" && !!p.next_available_date && p.next_available_date >= on && p.next_available_date <= addDays(on, 60);
+    if (p.status === "rented" && !soon) {
+      missing.push(p.next_available_date && p.next_available_date > addDays(on, 60)
+        ? `it is rented until ${p.next_available_date}; it can go up as Coming soon from ${addDays(p.next_available_date, -60)}`
+        : "it is rented: set its Next available date (within 60 days) to publish it as Coming soon");
+    } else if (!soon && !["available", "reserved"].includes(p.status)) missing.push("status must be Available or Reserved");
+    comingSoon = soon ? p.next_available_date : null;
     if (!p.listing_types?.length) missing.push("choose rent and/or sale");
     if (!p.asking_rent && !p.asking_sale_price && !p.price_on_request) missing.push("add a price, or tick Price on request");
     if (!(p.property_photos ?? []).some((ph) => ph.is_public && !ph.deleted_at)) missing.push("add at least one photo");
@@ -97,7 +107,7 @@ export async function setPublished(propertyId: string, publish: boolean): Promis
     .eq("id", propertyId);
   if (error) return { error: friendly(error.message) };
   refresh();
-  return {};
+  return comingSoon ? { notice: `On the website as "Coming soon", available ${comingSoon}. It turns into a normal listing that morning.` } : {};
 }
 
 /** Client photo link (/g/{token}) on or off, e.g. off once the unit is let or sold. */

@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { label, money } from "@/lib/format";
 import type { ViewingOptions } from "./viewing-form";
+import { leadChoices } from "../choices";
 
 export async function viewingOptions(): Promise<ViewingOptions> {
   const s = await createClient();
@@ -9,7 +10,7 @@ export async function viewingOptions(): Promise<ViewingOptions> {
     s.from("properties").select(`listing_no, status, property_type, building_name, unit_number, beds, square_feet, asking_rent, rent_currency, asking_sale_price, sale_currency,
       tower_name_legacy, tower:development_towers(name), development:developments(name), location:locations(name), owner:owners(name)`)
       .is("deleted_at", null).order("seq_no", { ascending: false }).limit(4000),
-    s.from("leads").select("lead_code, name").is("deleted_at", null).not("pipeline_status", "in", "(lost,closed_won)").order("created_at", { ascending: false }).limit(2000),
+    leadChoices({ openOnly: true }),
     s.from("agents").select("id, full_name").eq("status", "active").is("deleted_at", null).neq("role", "data_entry").order("full_name"),
     s.from("external_agents").select("id, agent_name").is("deleted_at", null).order("agent_name"),
   ]);
@@ -29,7 +30,7 @@ export async function viewingOptions(): Promise<ViewingOptions> {
   }).sort((a, b) => a.rank - b.rank);
   return {
     properties,
-    leads: (leads.data ?? []).filter((l) => l.lead_code).map((l) => ({ code: l.lead_code!, label: l.name })),
+    leads,
     agents: (agents.data ?? []).map((a) => ({ id: a.id, name: a.full_name })),
     externals: (externals.data ?? []).map((a) => ({ id: a.id, name: a.agent_name })),
   };

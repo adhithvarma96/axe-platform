@@ -98,3 +98,22 @@ export async function gallery(token: string) {
 }
 
 export const sizes = (v: unknown) => (v ?? {}) as PhotoSizes;
+
+export type WebReview = Database["public"]["Views"]["web_reviews"]["Row"];
+export type WebTeamMember = Database["public"]["Views"]["web_team"]["Row"];
+
+export async function reviews(): Promise<WebReview[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("reviews");
+  const { data } = await db().from("web_reviews").select("*");
+  return data ?? [];
+}
+
+export async function team(): Promise<WebTeamMember[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("team");
+  const { data } = await db().from("web_team").select("*").order("website_sort").order("name");
+  return data ?? [];
+}

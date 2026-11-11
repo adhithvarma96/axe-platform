@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { label, money, priceLines } from "@/lib/format";
 import { MandatePicker } from "../mandate-picker";
+import { AdminDelete } from "../../bin/admin-delete";
 
 export default function OwnerPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -46,7 +47,13 @@ async function Owner({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/owners">Owners</Link> › {o.name}</nav>
-      <div className="page-head"><h1>{o.name}</h1>{o.open_to_buying && <span className="badge">Open to buying</span>}</div>
+      <div className="page-head">
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}><h1>{o.name}</h1>{o.open_to_buying && <span className="badge">Open to buying</span>}</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <Link className="btn btn-ghost btn-sm" href={`/owners/${o.id}/edit`}>Edit</Link>
+          <AdminDelete table="owners" id={o.id} what={o.name} />
+        </div>
+      </div>
       {o.contact_protocol && <p className="protocol">Contact protocol: {label(o.contact_protocol)}{o.contact_notes ? ` · ${o.contact_notes}` : ""}</p>}
       <section className="panel">
         <h2 className="section-title">Mandate</h2>

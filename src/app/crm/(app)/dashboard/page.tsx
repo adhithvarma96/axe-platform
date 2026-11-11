@@ -46,8 +46,8 @@ async function Dashboard({ searchParams }: { searchParams: Promise<SP> }) {
     supabase.from("viewings").select("id, viewing_no, date, outcome, last_follow_up, conducted_by_agent_id, lead:leads(lead_code, name), property:properties(listing_no)").is("deleted_at", null).eq("outcome", "pending").lte("date", on),
     supabase.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null).eq("status", "available"),
     supabase.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
-    supabase.from("properties").select("listing_no, next_available_date, development:developments(name)").is("deleted_at", null).eq("status", "rented").not("next_available_date", "is", null).lte("next_available_date", addDays(on, 60)).order("next_available_date").limit(12),
-    supabase.from("properties").select("listing_no, last_made_available, development:developments(name)").is("deleted_at", null).gte("last_made_available", addDays(on, -30)).order("last_made_available", { ascending: false }).limit(8),
+    supabase.from("properties").select("listing_no, next_available_date, beds, website_published, development:developments(name)").is("deleted_at", null).eq("status", "rented").not("next_available_date", "is", null).lte("next_available_date", addDays(on, 60)).order("next_available_date").limit(40),
+    supabase.from("properties").select("listing_no, last_made_available, beds, status, website_published, development:developments(name)").is("deleted_at", null).gte("last_made_available", addDays(on, -60)).order("last_made_available", { ascending: false }).limit(40),
     supabase.from("viewings").select("id, viewing_no, date, lead:leads(lead_code, name), property:properties(listing_no)").is("deleted_at", null).eq("outcome", "wants_second_viewing").gte("date", addDays(on, -60)).order("date", { ascending: false }).limit(10),
     supabase.from("agents").select("id, full_name, role").eq("status", "active").is("deleted_at", null).in("role", ["agent", "sales_manager", "super_admin"]).order("full_name"),
     supabase.from("tasks").select("id, title, due_on, lead:leads(lead_code, name)").eq("status", "open").is("deleted_at", null).lte("due_on", on).eq("assignee_agent_id", user.agentId ?? "00000000-0000-0000-0000-000000000000").order("due_on").limit(20),
@@ -137,6 +137,36 @@ async function Dashboard({ searchParams }: { searchParams: Promise<SP> }) {
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>Our commission after co-broke, less referral fees; agent payouts stay in. USD at each closing&apos;s rate.</p>
         </section>
       )}
+
+      {money_ && (() => {
+        const withTarget = (agentsQ.data ?? []).map((a) => ({ a, t: target(a.id, "revenue_lkr") })).filter((x) => x.t);
+        if (!withTarget.length) return null;
+        const scale = r.months ?? null;
+        const sumT = withTarget.reduce((s, x) => s + (x.t ?? 0), 0) * (scale ?? 1);
+        const sumR = withTarget.reduce((s, x) => s + (money_?.revAgent.get(x.a.id) ?? 0), 0);
+        return (
+          <section className="panel" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
+              <h2 className="section-title" style={{ margin: 0 }}>Agents&apos; revenue · {r.label}</h2>
+              <span><b style={{ fontSize: 24, color: "var(--ink)" }}>{money(Math.round(sumR), "LKR") || "0 LKR"}</b> {scale ? <span className="muted">of {money(sumT, "LKR")} combined target</span> : null}</span>
+            </div>
+            {scale ? <Meter value={sumR} target={sumT} /> : null}
+            <div className="agent-rev">
+              {withTarget.map(({ a, t }) => {
+                const rv = Math.round(money_?.revAgent.get(a.id) ?? 0), tt = (t ?? 0) * (scale ?? 1);
+                return (
+                  <div key={a.id} className="agent-rev-row">
+                    <span style={{ fontWeight: 600, color: "var(--ink)" }}>{a.full_name}</span>
+                    <span>{money(rv, "LKR") || "0 LKR"}{scale ? <span className="muted"> of {money(tt, "LKR")}</span> : null}</span>
+                    {scale ? <Meter value={rv} target={tt} /> : null}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="muted" style={{ margin: 0, fontSize: 13 }}>Each agent is credited half a closing&apos;s revenue per side they worked. Deals with no agent side (yours) count only in the company figure.</p>
+          </section>
+        );
+      })()}
 
       <div className="kpis">
         {money_ && <Kpi k={`Closings · ${r.label}`} v={money_.closings} href={`/closings?${new URLSearchParams(rangeParams(r, "all"))}`} />}
@@ -249,11 +279,19 @@ async function Dashboard({ searchParams }: { searchParams: Promise<SP> }) {
           </ul>
         </section>
         <section className="panel">
-          <h2 className="section-title">Coming available in 60 days</h2>
+          <h2 className="section-title">Coming available soon (60 days) · {comingQ.data?.length ?? 0}</h2>
           <ul className="mini-list">
-            {(comingQ.data ?? []).map((p) => <li key={p.listing_no}><Link href={`/properties/${p.listing_no}`}>{p.listing_no}</Link><span className="muted">{p.development?.name ?? ""} · {date(p.next_available_date)}</span></li>)}
-            {(recentQ.data ?? []).map((p) => <li key={`r-${p.listing_no}`}><Link href={`/properties/${p.listing_no}`}>{p.listing_no}</Link><span className="muted">available again since {date(p.last_made_available)}</span></li>)}
-            {!comingQ.data?.length && !recentQ.data?.length && <li className="muted">Nothing coming up.</li>}
+            {(comingQ.data ?? []).map((p) => <li key={p.listing_no}><Link href={`/properties/${p.listing_no}`}>{p.listing_no}</Link><span className="muted">{[p.development?.name, p.beds != null ? `${p.beds} bed` : null].filter(Boolean).join(" · ")} · free {date(p.next_available_date)}{p.website_published ? " · on website" : ""}</span></li>)}
+            {!comingQ.data?.length && <li className="muted">No rented units free up in the next 60 days.</li>}
+          </ul>
+        </section>
+      </div>
+      <div className="grid-2">
+        <section className="panel">
+          <h2 className="section-title">Available recently (past 60 days) · {recentQ.data?.length ?? 0}</h2>
+          <ul className="mini-list">
+            {(recentQ.data ?? []).map((p) => <li key={`r-${p.listing_no}`}><Link href={`/properties/${p.listing_no}`}>{p.listing_no}</Link><span className="muted">{[p.development?.name, p.beds != null ? `${p.beds} bed` : null].filter(Boolean).join(" · ")} · vacant since {date(p.last_made_available)}{p.status !== "available" ? ` · now ${p.status}` : p.website_published ? " · on website" : " · not on website"}</span></li>)}
+            {!recentQ.data?.length && <li className="muted">No units became vacant in the past 60 days.</li>}
           </ul>
         </section>
       </div>

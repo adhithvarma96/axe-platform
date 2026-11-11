@@ -60,6 +60,11 @@ export async function saveAgent(_prev: TeamState, form: FormData): Promise<TeamS
     weekly_day_off: dayOff as never,
     public_name: s(form, "public_name"),
     public_whatsapp: s(form, "public_whatsapp"),
+    public_title: s(form, "public_title"),
+    public_bio: s(form, "public_bio"),
+    public_email: s(form, "public_email")?.toLowerCase() ?? null,
+    show_on_website: form.get("show_on_website") === "on",
+    website_sort: Number(s(form, "website_sort") ?? 100) || 100,
   }).eq("id", agentId);
   if (aErr) return { error: aErr.message };
 
@@ -67,6 +72,33 @@ export async function saveAgent(_prev: TeamState, form: FormData): Promise<TeamS
   const { error: hErr } = await supabase.from("agent_hr").upsert(hr, { onConflict: "agent_id" });
   if (hErr) return { error: hErr.message };
 
+  refresh();
+  return { ok: true };
+}
+
+/** The company's monthly revenue target. A change closes the old figure yesterday and starts the new one today. */
+export async function saveCompanyTarget(_prev: TeamState, form: FormData): Promise<TeamState> {
+  const user = await requireUser();
+  if (user.role !== "super_admin") return { error: "Only the Super Admin can change the company target." };
+  const value = num(form, "company_revenue");
+  if (value == null || Number.isNaN(value)) return { error: "Enter the monthly target in LKR." };
+  const supabase = await createClient();
+  const on = today();
+  const { data: cur } = await supabase.from("company_targets").select("id, target_value, effective_from").is("deleted_at", null)
+    .lte("effective_from", on).or(`effective_to.is.null,effective_to.gte.${on}`).order("effective_from", { ascending: false }).limit(1);
+  const c = cur?.[0];
+  if (c && Number(c.target_value) === value) return { ok: true };
+  if (c && c.effective_from >= on) {
+    const { error } = await supabase.from("company_targets").update({ target_value: value }).eq("id", c.id);
+    if (error) return { error: error.message };
+  } else {
+    if (c) {
+      const { error } = await supabase.from("company_targets").update({ effective_to: addDays(on, -1) }).eq("id", c.id);
+      if (error) return { error: error.message };
+    }
+    const { error } = await supabase.from("company_targets").insert({ target_value: value, effective_from: c ? on : `${on.slice(0, 7)}-01` });
+    if (error) return { error: error.message };
+  }
   refresh();
   return { ok: true };
 }

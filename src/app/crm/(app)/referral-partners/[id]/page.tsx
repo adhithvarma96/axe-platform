@@ -9,6 +9,7 @@ import { stageLabel, waNumber } from "@/lib/crm";
 import { PartyForm } from "../../party-form";
 import { saveReferralPartner } from "../actions";
 import { referralPartnerFields } from "../fields";
+import { AdminDelete } from "../../bin/admin-delete";
 
 export default function ReferralPartnerPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -45,7 +46,10 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/referral-partners">Referral partners</Link> › {p.full_name}</nav>
       <div className="page-head">
         <div><h1>{p.full_name}</h1><p className="muted">Registered {p.registered_at ? date(p.registered_at.slice(0, 10)) : "—"} · {p.referral_rate_pct}% of Axe&apos;s share</p></div>
-        {wa && <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {wa && <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
+          <AdminDelete table="referral_partners" id={p.id} what={p.full_name} />
+        </div>
       </div>
       <div className="grid-2">
         <section className="panel">
