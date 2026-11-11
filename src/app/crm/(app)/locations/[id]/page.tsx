@@ -37,7 +37,7 @@ async function Location({ params, searchParams }: { params: Promise<{ id: string
   return (
     <>
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/locations">Locations</Link> › {l.name}</nav>
-      <div className="page-head"><h1>{l.name}</h1><AdminDelete table="locations" id={l.id} what={l.name} /></div>
+      <div className="page-head"><h1>{l.name}</h1><div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}><Link className="btn btn-ghost btn-sm" href={`/locations/${l.id}/edit`}>Edit</Link><AdminDelete table="locations" id={l.id} what={l.name} /></div></div>
       <div className="grid-2">
         <section className="panel">
           <h2 className="section-title">Details</h2>

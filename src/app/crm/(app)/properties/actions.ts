@@ -1,5 +1,7 @@
 "use server";
 import { refresh } from "next/cache";
+import { after } from "next/server";
+import { matchOnPublish } from "@/lib/match-on-publish";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseProperty } from "@/lib/property-fields";
@@ -106,6 +108,8 @@ export async function setPublished(propertyId: string, publish: boolean): Promis
     .update({ website_published: publish, website_published_at: publish ? new Date().toISOString() : null })
     .eq("id", propertyId);
   if (error) return { error: friendly(error.message) };
+  // AI matching on publish (Adhith, 13 Nov): runs after the response, notifies the matched leads' agents
+  if (publish) after(() => matchOnPublish(propertyId).catch((e) => console.error("match on publish", (e as Error).message)));
   refresh();
   return comingSoon ? { notice: `On the website as "Coming soon", available ${comingSoon}. It turns into a normal listing that morning.` } : {};
 }

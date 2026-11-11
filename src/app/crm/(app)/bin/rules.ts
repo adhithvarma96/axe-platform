@@ -2,12 +2,20 @@
 // block until links are moved by hand). Deleting is a soft delete: the record moves to
 // the Deleted bin and can be restored. Super Admin only (enforced again by the database).
 
-export type Deletable = "properties" | "developments" | "owners" | "locations" | "external_agents" | "referral_partners";
+export type Deletable = "leads" | "properties" | "developments" | "owners" | "locations" | "external_agents" | "referral_partners";
 
 export const DELETABLE: Record<Deletable, {
   label: string; nameCol: string; href: (row: { id: string; name: string }) => string;
   links: { table: string; col: string; label: string; soft?: boolean }[];
 }> = {
+  leads: {
+    label: "Lead", nameCol: "name", href: () => "/leads",
+    links: [
+      { table: "viewings", col: "lead_id", label: "viewings", soft: true },
+      { table: "closings", col: "lead_id", label: "closings", soft: true },
+      { table: "offers", col: "lead_id", label: "offers", soft: true },
+    ],
+  },
   properties: {
     label: "Property", nameCol: "listing_no", href: (r) => `/properties/${r.name}`,
     links: [
@@ -56,6 +64,7 @@ export const DELETABLE: Record<Deletable, {
 };
 
 export const LIST_HREF: Record<Deletable, string> = {
+  leads: "/leads",
   properties: "/properties", developments: "/developments", owners: "/owners", locations: "/locations",
   external_agents: "/external-agents", referral_partners: "/referral-partners",
 };

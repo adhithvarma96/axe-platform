@@ -2100,6 +2100,7 @@ export type Database = {
           matched_table: string
           model: string | null
           rank: number
+          run_note: string | null
           reason: string | null
           run_id: string
           source_id: string
@@ -2116,6 +2117,7 @@ export type Database = {
           matched_table: string
           model?: string | null
           rank: number
+          run_note?: string | null
           reason?: string | null
           run_id: string
           source_id: string
@@ -2132,6 +2134,7 @@ export type Database = {
           matched_table?: string
           model?: string | null
           rank?: number
+          run_note?: string | null
           reason?: string | null
           run_id?: string
           source_id?: string
@@ -2251,30 +2254,36 @@ export type Database = {
       whatsapp_clicks: {
         Row: {
           agent_id: string | null
+          channel: string
           clicked_at: string
           id: string
           lead_logged_at: string | null
           listing_no: string | null
           page: string | null
           property_id: string | null
+          visitor: string | null
         }
         Insert: {
           agent_id?: string | null
+          channel?: string
           clicked_at?: string
           id?: string
           lead_logged_at?: string | null
           listing_no?: string | null
           page?: string | null
           property_id?: string | null
+          visitor?: string | null
         }
         Update: {
           agent_id?: string | null
+          channel?: string
           clicked_at?: string
           id?: string
           lead_logged_at?: string | null
           listing_no?: string | null
           page?: string | null
           property_id?: string | null
+          visitor?: string | null
         }
         Relationships: []
       }

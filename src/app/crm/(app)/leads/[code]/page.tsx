@@ -8,6 +8,8 @@ import { date, label, money } from "@/lib/format";
 import { needsFollowUp, outcomeLabel, stageLabel, waNumber } from "@/lib/crm";
 import { StagePanel } from "./stage-panel";
 import { ActivityLog, AddTask, CopyText, TaskDone } from "./lead-tools";
+import { AdminDelete } from "../../bin/admin-delete";
+import { MatchesPanel } from "../../matches/panel";
 
 export default function LeadPage({ params }: { params: Promise<{ code: string }> }) {
   return (
@@ -102,10 +104,13 @@ async function Lead({ params }: { params: Promise<{ code: string }> }) {
           <Link className="btn btn-ghost btn-sm" href={`/leads/${l.lead_code}/offer`}>Write offer</Link>
           <Link className="btn btn-ghost btn-sm" href={`/leads/${l.lead_code}/edit`}>Edit</Link>
           {user.role === "super_admin" && <Link className="btn btn-ghost btn-sm" href={`/closings/new?lead=${l.lead_code}`}>Log closing</Link>}
+          <AdminDelete table="leads" id={l.id} what={`${l.lead_code} (${l.name})`} />
         </div>
       </div>
 
       <StagePanel leadId={l.id} stage={l.pipeline_status} gates={gates} lostReasons={lostQ.data ?? []} isAdmin={user.role === "super_admin"} />
+
+      <MatchesPanel kind="lead" id={l.id} leadName={l.name} leadPhone={l.phone} />
 
       <div className="grid-2">
         <section className="panel">

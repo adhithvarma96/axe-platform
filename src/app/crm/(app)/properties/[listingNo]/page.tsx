@@ -8,6 +8,7 @@ import { date, label, money, priceLines } from "@/lib/format";
 import { PhotoManager } from "./photo-manager";
 import { PublishSwitch } from "./publish-switch";
 import { SharePanel } from "./share-panel";
+import { MatchesPanel } from "../../matches/panel";
 import { ROLE_TITLE, whatsappWriteup } from "@/lib/whatsapp";
 import { AdminDelete } from "../../bin/admin-delete";
 
@@ -122,6 +123,8 @@ async function Property({ params }: { params: Promise<{ listingNo: string }> }) 
         galleryUrl={galleryUrl}
         galleryEnabled={p.gallery_enabled}
       />
+
+      <MatchesPanel kind="property" id={p.id} />
 
       <div className="grid-2">
         <section className="panel">

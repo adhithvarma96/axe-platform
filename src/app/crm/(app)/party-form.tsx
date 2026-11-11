@@ -1,10 +1,12 @@
 "use client";
 import { useActionState } from "react";
+import { Combo, type ComboOption } from "./combo";
 
 export type Field =
   | { name: string; label: string; type?: "text" | "email" | "tel" | "date" | "number"; required?: boolean; placeholder?: string; wide?: boolean }
   | { name: string; label: string; type: "select"; options: [string, string][]; required?: boolean; wide?: boolean }
-  | { name: string; label: string; type: "textarea"; wide?: boolean };
+  | { name: string; label: string; type: "textarea"; wide?: boolean }
+  | { name: string; label: string; type: "combo"; options: ComboOption[]; required?: boolean; wide?: boolean; placeholder?: string };
 
 export type PartyState = { error?: string; ok?: boolean; duplicate?: { id: string; name: string } };
 
@@ -27,7 +29,9 @@ export function PartyForm({ fields, values, action, submit, duplicateHref }: {
           return (
             <div key={f.name} className="field" style={f.wide || f.type === "textarea" ? { gridColumn: "1 / -1" } : undefined}>
               <label htmlFor={id}>{f.label}{"required" in f && f.required ? " *" : ""}</label>
-              {f.type === "select" ? (
+              {f.type === "combo" ? (
+                <Combo id={id} name={f.name} options={f.options} defaultValue={String(v)} placeholder={f.placeholder ?? "Type to search"} required={f.required} />
+              ) : f.type === "select" ? (
                 <select id={id} name={f.name} defaultValue={String(v)} required={f.required}>
                   <option value="">—</option>
                   {f.options.map(([k, l]) => <option key={k} value={k}>{l}</option>)}

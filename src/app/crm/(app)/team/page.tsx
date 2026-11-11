@@ -48,7 +48,7 @@ async function Team() {
     supabase.from("viewings").select("conducted_by_agent_id").is("deleted_at", null).gte("date", w.monday).lte("date", on),
     supabase.from("properties").select("listing_agent_id").is("deleted_at", null).eq("is_bulk_import", false).gte("listing_date", w.monday).lte("listing_date", on),
     supabase.from("company_targets").select("target_value").is("deleted_at", null).lte("effective_from", on).or(`effective_to.is.null,effective_to.gte.${on}`).order("effective_from", { ascending: false }).limit(1),
-    supabase.from("whatsapp_clicks").select("agent_id").gte("clicked_at", `${w.month}T00:00:00+05:30`),
+    supabase.from("whatsapp_clicks").select("agent_id, channel").gte("clicked_at", `${w.month}T00:00:00+05:30`),
     supabase.from("leads").select("assigned_agent_id").is("deleted_at", null).gte("created_at", `${w.month}T00:00:00+05:30`),
   ]);
   const companyTarget = Number(companyQ.data?.[0]?.target_value ?? 10_000_000);
@@ -100,7 +100,7 @@ async function Team() {
             </div>
             {user.role === "super_admin" && <MemberAccess id={a.id} active={a.status === "active"} hasLogin={!!a.user_id} isMe={a.id === user.agentId} />}
             <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-              This month: {(tapsQ.data ?? []).filter((t) => t.agent_id === a.id).length} WhatsApp taps on their website listings · {(leadsQ.data ?? []).filter((l) => l.assigned_agent_id === a.id).length} new leads logged
+              This month on their website listings: {(() => { const t = (tapsQ.data ?? []).filter((x) => x.agent_id === a.id); const n = (c: string) => t.filter((x) => x.channel === c).length; return `${n("whatsapp")} WhatsApp, ${n("call")} Call and ${n("email")} Email taps`; })()} · {(leadsQ.data ?? []).filter((l) => l.assigned_agent_id === a.id).length} new leads logged
             </p>
             {user.role === "super_admin" && (
               <WebsiteImage kind="agent" id={a.id} image={a.public_photo} ideal="headshot" square

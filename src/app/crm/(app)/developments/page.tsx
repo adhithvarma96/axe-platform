@@ -15,6 +15,7 @@ export default function DevelopmentsPage({ searchParams }: { searchParams: Promi
           <h1>Developments</h1>
           <p className="muted">Buildings and projects. Each one can have its own page on the website.</p>
         </div>
+        <Link className="btn" href="/developments/new">+ Add development</Link>
       </div>
       <Suspense fallback={<p className="muted">Loading developments…</p>}>
         <DevList searchParams={searchParams} />

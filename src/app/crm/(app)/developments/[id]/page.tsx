@@ -9,6 +9,7 @@ import { WebsiteImage } from "../../website-image";
 import { ClosingHistory } from "../../closings/history";
 import { AdminDelete } from "../../bin/admin-delete";
 import { ScopedProperties } from "../../properties/scoped-list";
+import { Towers } from "../towers";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -43,7 +44,7 @@ async function Development({ params, searchParams }: { params: Promise<{ id: str
   return (
     <>
       <nav className="muted" style={{ fontSize: 13 }}><Link href="/developments">Developments</Link> › {d.name}</nav>
-      <div className="page-head"><h1>{d.name}</h1><AdminDelete table="developments" id={d.id} what={d.name} /></div>
+      <div className="page-head"><h1>{d.name}</h1><div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}><Link className="btn btn-ghost btn-sm" href={`/developments/${d.id}/edit`}>Edit</Link><AdminDelete table="developments" id={d.id} what={d.name} /></div></div>
       <div className="grid-2">
         <section className="panel">
           <h2 className="section-title">Details</h2>
@@ -60,6 +61,10 @@ async function Development({ params, searchParams }: { params: Promise<{ id: str
           {d.towers?.length ? <p>{d.towers.map((t) => t.name).sort().join(" · ")}</p> : <p className="muted">No towers recorded.</p>}
         </section>
       </div>
+      <section className="panel">
+        <h2 className="section-title">Towers ({(d.towers ?? []).length})</h2>
+        <Towers developmentId={d.id} towers={(d.towers ?? []).slice().sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))} />
+      </section>
       <ScopedProperties col="development_id" id={d.id} sp={sp} path={`/developments/${d.id}`} />
       <ClosingHistory by="development" id={id} />
     </>

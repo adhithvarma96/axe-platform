@@ -13,6 +13,7 @@ export default function LocationsPage() {
           <h1>Locations</h1>
           <p className="muted">Areas, their market tier (Colombo 02 is prime core) and website pages.</p>
         </div>
+        <Link className="btn" href="/locations/new">+ Add location</Link>
       </div>
       <Suspense fallback={<p className="muted">Loading locations…</p>}>
         <LocList />
