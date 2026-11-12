@@ -173,25 +173,36 @@ async function rankAndSave(db: Db, source: { table: "leads" | "properties"; id: 
   let note: string | null = null;
   let model = "rules";
 
-  if (process.env.ANTHROPIC_API_KEY) {
+  // A key pasted into Vercel with a trailing space or line break would make every call fail.
+  const apiKey = (process.env.ANTHROPIC_API_KEY ?? "").trim();
+  let aiProblem: string | null = apiKey ? null : "no ANTHROPIC_API_KEY on this server (add it in Vercel, then redeploy)";
+  if (apiKey) {
     try {
-      const client = new Anthropic();
+      const client = new Anthropic({ apiKey });
       const rules = direction === "lead"
         ? `Rank properties for this client. Rules in priority order: (1) the must-have features are already guaranteed; (2) strongly prioritise properties in the client's preferred developments; (3) then the preferred areas; (4) budget within range or 10% tolerance; (5) bedrooms exact or one more. Return up to 5 genuinely good matches; never force 5. Each reason is one sentence and says explicitly when the property is in a preferred development. If none are in the preferred developments, say so in "note".`
         : `Rank buyers/tenants for this property. Candidates are labelled LEAD or OWNER-BUYER. Rules: a preferred-development match is a PRIORITY MATCH and goes first; then preferred areas; then budget fit (10% tolerance) and bedrooms (exact or one more). Owner-buyers are especially valuable. Return up to 5 genuinely good matches; never force 5. Each reason is one sentence, starting with LEAD or OWNER-BUYER.`;
-      const response = await client.beta.messages.create({
+      const request = {
         model: MODEL,
         max_tokens: 4000,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        output_config: { effort: "low", format: { type: "json_schema", schema: RANK_SCHEMA as unknown as Record<string, unknown> } },
+        output_config: { effort: "low" as const, format: { type: "json_schema" as const, schema: RANK_SCHEMA as unknown as Record<string, unknown> } },
         system: "You match clients and apartments for Axe Realty, a Colombo apartment brokerage. Use only the facts given. Refer to candidates by their ref exactly as written. Reasons are plain, specific and short, for a property agent to read on a phone.",
         messages: [{
-          role: "user",
+          role: "user" as const,
           content: `${rules}\n\n${brief}\n\nCandidates (ref: summary):\n${shortlist.map((c) => `${c.ref}: ${c.summary}`).join("\n")}`,
         }],
-      });
-      if (response.stop_reason !== "refusal") {
+      };
+      let response;
+      try {
+        // server-side refusal fallback: if the model declines, the API retries on a fallback model
+        response = await client.beta.messages.create({ ...request, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+      } catch (e) {
+        // an account without access to that beta gets a 400: run the same request without it
+        if (e instanceof Anthropic.BadRequestError && /fallback|beta/i.test(e.message)) response = await client.beta.messages.create(request);
+        else throw e;
+      }
+      if (response.stop_reason === "refusal") aiProblem = "the model declined this request";
+      else {
         const text = response.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
         const parsed = JSON.parse(text) as { note: string; matches: { ref: string; reason: string }[] };
         const byRef = new Map(shortlist.map((c) => [c.ref, c]));
@@ -200,10 +211,12 @@ async function rankAndSave(db: Db, source: { table: "leads" | "properties"; id: 
         model = response.model;
       }
     } catch (e) {
-      console.error("matching: model call failed, using rules", (e as Error).message);
+      aiProblem = describeError(e);
+      console.error("matching: model call failed, using rules:", aiProblem);
     }
   }
-  if (!picks.length && model === "rules") {
+  if (aiProblem && model === "rules") model = `rules: ${aiProblem}`.slice(0, 200);
+  if (!picks.length && model.startsWith("rules")) {
     picks = shortlist.slice(0, 5).map((c) => ({ c, reason: ruleReason(c, direction) }));
     if (direction === "lead" && !picks.some((x) => x.c.preferredDev)) note = "None of these are in the client's preferred developments.";
   }
@@ -217,6 +230,18 @@ async function rankAndSave(db: Db, source: { table: "leads" | "properties"; id: 
   const { error } = await db.from("match_results").insert(rows);
   if (error) return { runId: null, count: 0, note, model, error: error.message };
   return { runId, count: rows.length, note, model };
+}
+
+/** A short, safe explanation of why the AI call failed (never includes the key). */
+function describeError(e: unknown): string {
+  if (e instanceof Anthropic.AuthenticationError) return "the API key was rejected (401): check it was copied in full, and that it hasn't been revoked";
+  if (e instanceof Anthropic.PermissionDeniedError) return "the API key isn't allowed to use this model (403)";
+  if (e instanceof Anthropic.NotFoundError) return `model ${MODEL} isn't available to this account (404)`;
+  if (e instanceof Anthropic.RateLimitError) return "rate limited (429): try again in a minute";
+  if (e instanceof Anthropic.BadRequestError) return /credit/i.test(e.message) ? "the Anthropic account has no credit (add billing in the Console)" : `request rejected (400): ${e.message.slice(0, 120)}`;
+  if (e instanceof Anthropic.APIError) return `Anthropic API error ${e.status ?? ""}`.trim();
+  if (e instanceof SyntaxError) return "the model's answer couldn't be read";
+  return (e as Error)?.message?.slice(0, 120) ?? "unknown error";
 }
 
 function ruleReason(c: MatchCandidate, direction: "lead" | "property"): string {

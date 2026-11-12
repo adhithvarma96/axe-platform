@@ -53,7 +53,7 @@ export async function MatchesPanel({ kind, id, leadName, leadPhone }: { kind: "l
         <div>
           <h2 className="section-title" style={{ margin: 0 }}>AI matches</h2>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-            {run ? `Last run ${when(run.created_at)}${run.model === "rules" ? " (rules only; AI ranking is off)" : ""}` : kind === "lead" ? "Up to 5 available listings that fit this lead." : "Up to 5 active leads and owner-buyers for this listing."}
+            {run ? `Last run ${when(run.created_at)}${run.model?.startsWith("rules") ? ` (rules only${run.model.length > 5 ? `, because ${run.model.slice(7)}` : ""})` : " by AI"}` : kind === "lead" ? "Up to 5 available listings that fit this lead." : "Up to 5 active leads and owner-buyers for this listing."}
           </p>
         </div>
         <FindMatches kind={kind} id={id} again={!!run} />
