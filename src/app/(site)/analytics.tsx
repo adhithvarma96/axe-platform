@@ -10,7 +10,8 @@
 //
 // Never send names, emails or phone numbers to these services (privacy + Google's terms).
 import Script from "next/script";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const GTM = process.env.NEXT_PUBLIC_GTM_ID;
 const GA = process.env.NEXT_PUBLIC_GA_ID;
@@ -27,7 +28,10 @@ function init(win: Win) {
   if (GA && !win.gtag) {
     win.gtag = function gtag() { win.dataLayer!.push(arguments); }; // eslint-disable-line prefer-rest-params
     win.gtag("js", new Date());
-    win.gtag("config", GA);
+    // Page views are sent by PageViews below, once per page. GA4's own "browser history"
+    // page views must be OFF in GA4 (Next.js updates history right after load, which GA4
+    // otherwise counts as a second view).
+    win.gtag("config", GA, { send_page_view: false });
   }
   if (PIXEL && !win.fbq) {
     const n: Fbq = function (...a: unknown[]) { if (n.callMethod) n.callMethod(...a); else n.queue!.push(a); };
@@ -98,11 +102,32 @@ function useContactTaps() {
   }, []);
 }
 
+let lastPath: string | null = null;
+/** One GA4 page_view per page, including pages opened by in-site links. (The Meta Pixel
+ *  tracks in-site navigation itself.) */
+function PageViews() {
+  const path = usePathname();
+  useEffect(() => {
+    const win = w();
+    if (!win || !GA || path === lastPath) return;
+    const referrer = lastPath ? location.origin + lastPath : document.referrer;
+    init(win);
+    // let the new page set its title first
+    const t = setTimeout(() => {
+      lastPath = path;
+      win.gtag?.("event", "page_view", { page_location: location.href, page_title: document.title, page_referrer: referrer });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [path]);
+  return null;
+}
+
 export function Analytics() {
   useContactTaps();
   useEffect(() => { const win = w(); if (win) init(win); }, []);
   return (
     <>
+      <Suspense fallback={null}><PageViews /></Suspense>
       {GTM && (
         <Script id="gtm" strategy="afterInteractive">{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM}');`}</Script>
       )}
