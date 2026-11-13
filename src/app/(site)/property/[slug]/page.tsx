@@ -9,6 +9,7 @@ import { date, label, money } from "@/lib/format";
 import { Icon, ICON, ListingCard, SiteHeader } from "../../components";
 import { Gallery } from "../../gallery";
 import { EnquiryForm } from "../../forms";
+import { TrackView } from "../../analytics";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -90,6 +91,8 @@ async function Listing({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema(l, photos.map((p) => p.large))) }} />
+      <TrackView listingNo={l.listing_no ?? ""} name={listingTitle(l)} category={`${intentLabel(l)}${l.development_name ? ` · ${l.development_name}` : ""}`}
+        price={l.asking_rent ?? l.asking_sale_price} currency={l.asking_rent ? l.rent_currency : l.sale_currency} />
       <div className="wrap" style={{ paddingTop: 22 }}>
         <nav className="crumb p-crumb" aria-label="Breadcrumb">
           <Link href="/">Home</Link><span>/</span>

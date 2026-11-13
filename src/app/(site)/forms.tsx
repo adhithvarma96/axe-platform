@@ -1,5 +1,6 @@
 "use client";
 import { startTransition, useActionState, useEffect, useRef, type FormEvent } from "react";
+import { TrackLead } from "./analytics";
 import { submitContact, submitEnquiry, submitOwner, submitReport, type SubmitState } from "./form-actions";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -74,7 +75,7 @@ const Err = ({ s }: { s: SubmitState }) => (s.error ? <p role="alert" style={{ c
 
 export function EnquiryForm({ listingNo, defaultMessage }: { listingNo: string; defaultMessage: string }) {
   const [state, onSubmit, pending] = useSubmit(submitEnquiry);
-  if (state.ok) return <Thanks title="Thank you, we've got it" text={`Your enquiry${listingNo ? ` for ${listingNo}` : ""} is with our team. We'll WhatsApp you shortly.`} />;
+  if (state.ok) return <><TrackLead form="enquiry" listingNo={listingNo || undefined} /><Thanks title="Thank you, we've got it" text={`Your enquiry${listingNo ? ` for ${listingNo}` : ""} is with our team. We'll WhatsApp you shortly.`} /></>;
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
       <input type="hidden" name="listing_no" value={listingNo} />
@@ -91,7 +92,7 @@ export function EnquiryForm({ listingNo, defaultMessage }: { listingNo: string; 
 
 export function ContactForm() {
   const [state, onSubmit, pending] = useSubmit(submitContact);
-  if (state.ok) return <Thanks title="Thanks for reaching out" text="We've received your message and someone from Axe Realty will get back to you shortly." />;
+  if (state.ok) return <><TrackLead form="contact" /><Thanks title="Thanks for reaching out" text="We've received your message and someone from Axe Realty will get back to you shortly." /></>;
   return (
     <form onSubmit={onSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 14, position: "relative" }}>
       <Hidden />
@@ -109,7 +110,7 @@ export function ContactForm() {
 
 export function OwnerForm({ developments }: { developments: string[] }) {
   const [state, onSubmit, pending] = useSubmit(submitOwner);
-  if (state.ok) return <Thanks title="Thank you, we'll be in touch" text="An Axe Realty agent will WhatsApp you to arrange a visit and a pricing assessment." />;
+  if (state.ok) return <><TrackLead form="list_property" /><Thanks title="Thank you, we'll be in touch" text="An Axe Realty agent will WhatsApp you to arrange a visit and a pricing assessment." /></>;
   return (
     <form onSubmit={onSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: 14, position: "relative" }}>
       <Hidden />
@@ -148,7 +149,7 @@ export function OwnerForm({ developments }: { developments: string[] }) {
 
 export function ReportForm() {
   const [state, onSubmit, pending] = useSubmit(submitReport);
-  if (state.ok) return <Thanks title="Thank you" text="The Colombo Apartment Report is on its way to your inbox. If you don't see it in a few minutes, check your promotions or spam folder." />;
+  if (state.ok) return <><TrackLead form="report" event="sign_up" /><Thanks title="Thank you" text="The Colombo Apartment Report is on its way to your inbox. If you don't see it in a few minutes, check your promotions or spam folder." /></>;
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
       <Hidden />

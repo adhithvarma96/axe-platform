@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./site.css";
 import { SiteFooter, WhatsAppFloat } from "./components";
 import { SITE } from "@/lib/site/listing";
+import { Analytics } from "./analytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -26,6 +27,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <main>{children}</main>
       <SiteFooter />
       <WhatsAppFloat />
+      <Analytics />
     </div>
   );
 }
