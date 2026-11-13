@@ -38,13 +38,15 @@ export async function saveClosing(_prev: FormState, form: FormData): Promise<For
     usd_lkr_rate: n(form, "usd_lkr_rate"),
     lease_start_date: s(form, "lease_start_date"), lease_end_date: s(form, "lease_end_date"),
     rent_advance_months: n(form, "rent_advance_months"), security_deposit_months: n(form, "security_deposit_months"),
-    gross_commission: n(form, "gross_commission"), our_commission: n(form, "our_commission"), commission_currency: s(form, "commission_currency") as never,
+    gross_commission: n(form, "gross_commission"),
+    lead_side_commission: n(form, "lead_side_commission"), listing_side_commission: n(form, "listing_side_commission"),
+    our_commission: (n(form, "lead_side_commission") ?? 0) + (n(form, "listing_side_commission") ?? 0), commission_currency: s(form, "commission_currency") as never,
     co_broke_external_agent_id: s(form, "co_broke_external_agent_id"), co_broke_split_pct: n(form, "co_broke_split_pct"),
     lead_side_referral_partner_id: s(form, "lead_side_referral_partner_id"), listing_side_referral_partner_id: s(form, "listing_side_referral_partner_id"),
     split_override_reason: s(form, "split_override_reason"), notes: s(form, "notes"),
   };
   if (!row.deal_type) return { error: "Choose the deal type." };
-  if (row.our_commission == null || !row.commission_currency) return { error: "Enter our commission and its currency." };
+  if ((row.lead_side_commission == null && row.listing_side_commission == null) || !row.commission_currency) return { error: "Enter our commission from the landlord and/or tenant side, and its currency." };
 
   const q = id
     ? supabase.from("closings").update(row).eq("id", id).select("closing_no").maybeSingle()

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { date, label, money } from "@/lib/format";
 import { ClosingForm } from "../closing-form";
+import { sidePct } from "@/lib/commission";
 import { closingOptions } from "../form-data";
 import { PayoutButton } from "../../commissions/payout-button";
 
@@ -49,6 +50,11 @@ async function Closing({ params, searchParams }: { params: Promise<{ no: string 
     .eq("closing_id", c.id).is("deleted_at", null).order("side");
   const fmt = (x: number | null) => (x == null ? "—" : money(x, c.commission_currency));
   const balanced = Math.abs(Number(c.split_delta ?? 0)) <= 1;
+  const pct = (pts: number | null) => (pts == null ? "—" : `${sidePct(Number(pts))}%`);
+  const sale = c.deal_type === "sale";
+  const split = c.lead_side_commission != null || c.listing_side_commission != null;
+  const leadBase = split ? Number(c.lead_side_commission ?? 0) : Number(c.our_commission ?? 0) / 2;
+  const listBase = split ? Number(c.listing_side_commission ?? 0) : Number(c.our_commission ?? 0) - leadBase;
 
   return (
     <>
@@ -80,22 +86,24 @@ async function Closing({ params, searchParams }: { params: Promise<{ no: string 
           <h2 className="section-title">Commission split · {fmt(c.our_commission)}</h2>
           <div className="table-wrap">
             <table className="split">
-              <thead><tr><th scope="col">Side</th><th scope="col">Agent</th><th scope="col">Referrer</th><th scope="col">Axe</th></tr></thead>
+              <thead><tr><th scope="col">Side</th><th scope="col">Commission</th><th scope="col">Agent</th><th scope="col">Referrer</th><th scope="col">Axe</th></tr></thead>
               <tbody>
                 <tr>
-                  <td>Lead<div className="muted" style={{ fontSize: 12 }}>{c.lead_agent?.full_name ?? "No agent"} · {label(c.lead_sourcing_model) || "?"} · {c.lead_agent_exempt ? "exempt" : c.lead_agent_tenure}</div></td>
-                  <td>{fmt(c.lead_agent_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.lead_agent_rate ?? "—"} pts</div></td>
-                  <td>{fmt(c.lead_referrer_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.lead_ref?.full_name ?? ""}</div></td>
-                  <td>{fmt(c.lead_axe_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.lead_axe_rate ?? "—"} pts</div></td>
+                  <td>{sale ? "Buyer" : "Tenant"}<div className="muted" style={{ fontSize: 12 }}>{c.lead_agent?.full_name ?? "No agent"} · {label(c.lead_sourcing_model) || "?"} · {c.lead_agent_exempt ? "exempt" : c.lead_agent_tenure}</div></td>
+                  <td>{fmt(leadBase)}{!split && <div className="muted" style={{ fontSize: 12 }}>half (not split)</div>}</td>
+                  <td>{fmt(c.lead_agent_payout)}<div className="muted" style={{ fontSize: 12 }}>{pct(c.lead_agent_rate)}</div></td>
+                  <td>{fmt(c.lead_referrer_payout)}<div className="muted" style={{ fontSize: 12 }}>{Number(c.lead_referrer_rate) ? `${pct(c.lead_referrer_rate)} · ` : ""}{c.lead_ref?.full_name ?? ""}</div></td>
+                  <td>{fmt(c.lead_axe_payout)}<div className="muted" style={{ fontSize: 12 }}>{pct(c.lead_axe_rate)}</div></td>
                 </tr>
                 <tr>
-                  <td>Listing<div className="muted" style={{ fontSize: 12 }}>{c.listing_agent?.full_name ?? "No agent"} · {label(c.listing_sourcing_model) || "?"} · {c.listing_agent_exempt ? "exempt" : c.listing_agent_tenure}</div></td>
-                  <td>{fmt(c.listing_agent_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.listing_agent_rate ?? "—"} pts</div></td>
-                  <td>{fmt(c.listing_referrer_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.list_ref?.full_name ?? ""}</div></td>
-                  <td>{fmt(c.listing_axe_payout)}<div className="muted" style={{ fontSize: 12 }}>{c.listing_axe_rate ?? "—"} pts</div></td>
+                  <td>{sale ? "Seller" : "Landlord"}<div className="muted" style={{ fontSize: 12 }}>{c.listing_agent?.full_name ?? "No agent"} · {label(c.listing_sourcing_model) || "?"} · {c.listing_agent_exempt ? "exempt" : c.listing_agent_tenure}</div></td>
+                  <td>{fmt(listBase)}{!split && <div className="muted" style={{ fontSize: 12 }}>half (not split)</div>}</td>
+                  <td>{fmt(c.listing_agent_payout)}<div className="muted" style={{ fontSize: 12 }}>{pct(c.listing_agent_rate)}</div></td>
+                  <td>{fmt(c.listing_referrer_payout)}<div className="muted" style={{ fontSize: 12 }}>{Number(c.listing_referrer_rate) ? `${pct(c.listing_referrer_rate)} · ` : ""}{c.list_ref?.full_name ?? ""}</div></td>
+                  <td>{fmt(c.listing_axe_payout)}<div className="muted" style={{ fontSize: 12 }}>{pct(c.listing_axe_rate)}</div></td>
                 </tr>
               </tbody>
-              <tfoot><tr><td>Total</td><td>{fmt(c.agent_total)}</td><td>{fmt(c.referrer_total)}</td><td>{fmt(c.axe_total)}</td></tr></tfoot>
+              <tfoot><tr><td>Total</td><td>{fmt(c.our_commission)}</td><td>{fmt(c.agent_total)}</td><td>{fmt(c.referrer_total)}</td><td>{fmt(c.axe_total)}</td></tr></tfoot>
             </table>
           </div>
           <p className={balanced ? "balanced" : "unbalanced"} style={{ margin: "10px 0 0" }}>{balanced ? "✓ Balanced" : `✗ Off by ${fmt(c.split_delta)}`}{c.split_override_reason ? <span className="muted" style={{ fontWeight: 400 }}> · Override: {c.split_override_reason}</span> : null}</p>

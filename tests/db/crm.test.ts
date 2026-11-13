@@ -158,9 +158,10 @@ describe("commission engine (7.9, Schedule A v1.0)", () => {
   const MATRIX: [string, number, number, number, number, number, number][] = [
     // model, confirmed agent/ref/axe, probation agent/ref/axe
     ["company_direct", 17.5, 0, 32.5, 15, 0, 35],
-    ["company_via_referrer", 17.5, 15, 17.5, 15, 15, 20],
+    // referral partner at the default 15% of the side = 7.5 points of the side's 50
+    ["company_via_referrer", 17.5, 7.5, 25, 15, 7.5, 27.5],
     ["agent_self_sourced", 25, 0, 25, 25, 0, 25],
-    ["agent_via_referrer", 20, 15, 15, 20, 15, 15],
+    ["agent_via_referrer", 20, 7.5, 22.5, 20, 7.5, 22.5],
   ];
 
   for (const [model, ca, cr, cx, pa, pr, px] of MATRIX) {
@@ -197,8 +198,9 @@ describe("commission engine (7.9, Schedule A v1.0)", () => {
 
   it("referral fees come out of Axe's share, never the agent's", async () => {
     const c = await close({ leadModel: "agent_via_referrer", listModel: "company_direct" });
-    expect([n(c.lead_agent_rate), n(c.lead_referrer_rate), n(c.lead_axe_rate)]).toEqual([20, 15, 15]);
-    expect(n(c.lead_referrer_payout)).toBe(150000);
+    expect([n(c.lead_agent_rate), n(c.lead_referrer_rate), n(c.lead_axe_rate)]).toEqual([20, 7.5, 22.5]);
+    expect(n(c.lead_referrer_payout)).toBe(75000); // 15% of the lead side's 500,000
+    expect(n(c.lead_agent_payout)).toBe(200000);
   });
 
   it("uses the legacy schedule before 1 Sep 2026 (100% to Axe)", async () => {
@@ -215,6 +217,49 @@ describe("commission engine (7.9, Schedule A v1.0)", () => {
        values ('2026-12-15', 'sale', 900000, 'LKR', 'Legacy deal, sides not recorded') returning id`,
     ));
     expect(ok.rows).toHaveLength(1);
+  });
+
+  async function sided(opts: { lead: number | null; listing: number | null; listModel: string; leadModel?: string; partnerPct?: number }) {
+    const pid = (await db.query<{ id: string }>("insert into public.referral_partners (full_name, referral_rate_pct) values ('Ref Pct', $1) returning id", [opts.partnerPct ?? 15])).rows[0].id;
+    const leadModel = opts.leadModel ?? "company_direct";
+    const l = await lead({ sourcing_model: leadModel, referral_partner_id: leadModel.includes("referrer") ? pid : null });
+    const p = await property({ sourcing_model: opts.listModel, referral_partner_id: opts.listModel.includes("referrer") ? pid : null });
+    const { rows } = await as(db, ADMIN(), () => db.query<Row>(
+      `insert into public.closings (closing_date, deal_type, lead_id, property_id, lead_side_agent_id, listing_side_agent_id,
+         lead_side_commission, listing_side_commission, our_commission, commission_currency)
+       values ('2026-12-15', 'rental', $1, $2, $3, $4, $5, $6, 1, 'LKR') returning *`,
+      [l, p, sabry.agentId, anuk.agentId, opts.lead, opts.listing]));
+    return { c: rows[0], pid };
+  }
+
+  it("Adhith's example: 325,000 (162,500 each side), landlord referred -> 15% of the landlord side only", async () => {
+    const { c } = await sided({ lead: 162500, listing: 162500, listModel: "company_via_referrer" });
+    expect(n(c.our_commission)).toBe(325000);
+    expect(n(c.listing_referrer_payout)).toBe(24375);
+    expect(n(c.lead_referrer_payout)).toBe(0);
+    expect([n(c.listing_agent_payout), n(c.listing_axe_payout)]).toEqual([56875, 81250]);
+    expect([n(c.lead_agent_payout), n(c.lead_axe_payout)]).toEqual([56875, 105625]);
+    expect(n(c.split_delta)).toBe(0);
+  });
+
+  it("uses the partner's own negotiated rate", async () => {
+    const { c } = await sided({ lead: 162500, listing: 162500, listModel: "company_via_referrer", partnerPct: 10 });
+    expect(n(c.listing_referrer_rate)).toBe(5);
+    expect(n(c.listing_referrer_payout)).toBe(16250);
+    expect(n(c.split_delta)).toBe(0);
+  });
+
+  it("unequal sides: each side's shares come from that side's own commission", async () => {
+    const { c } = await sided({ lead: 100000, listing: 0, listModel: "company_direct" });
+    expect(n(c.our_commission)).toBe(100000);
+    expect([n(c.lead_agent_payout), n(c.listing_agent_payout), n(c.axe_total)]).toEqual([35000, 0, 65000]);
+  });
+
+  it("keeps the rate fixed on the closing when the partner's rate changes later", async () => {
+    const { c, pid } = await sided({ lead: 162500, listing: 162500, listModel: "company_via_referrer", partnerPct: 10 });
+    await db.query("update public.referral_partners set referral_rate_pct = 15 where id = $1", [pid]);
+    const { rows } = await as(db, ADMIN(), () => db.query<Row>("update public.closings set notes = 'edited' where id = $1 returning *", [c.id]));
+    expect(n(rows[0].listing_referrer_payout)).toBe(16250);
   });
 
   it("converts to USD at the closing's rate", async () => {

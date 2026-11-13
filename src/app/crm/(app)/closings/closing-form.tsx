@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { label, money } from "@/lib/format";
-import { computeSplit, type AgentHr, type Model, type Rate, type Schedule } from "@/lib/commission";
+import { computeSplit, sidePct, type AgentHr, type Model, type Rate, type Schedule } from "@/lib/commission";
 import { saveClosing, type FormState } from "./actions";
 
 export interface ClosingOptions {
@@ -14,7 +14,7 @@ export interface ClosingOptions {
   propertyChoices: ComboOption[];
   agents: { id: string; name: string }[];
   externals: { id: string; name: string }[];
-  partners: { id: string; name: string }[];
+  partners: { id: string; name: string; pct: number }[];
   schedules: Schedule[]; rates: Rate[]; hr: AgentHr[];
 }
 type V = Record<string, string | number | null>;
@@ -41,7 +41,12 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
   const [term, setTerm] = useState("12");
   const [value, setValue] = useState(str("total_deal_value"));
   const [dealCur, setDealCur] = useState(str("deal_currency") || "USD");
-  const [ours, setOurs] = useState(str("our_commission"));
+  // Axe's commission from each side. Older closings have only the total: start them at half each.
+  const half = values.lead_side_commission == null && values.listing_side_commission == null && values.our_commission != null
+    ? String(Math.round(Number(values.our_commission) / 2 * 100) / 100) : null;
+  const [leadCom, setLeadCom] = useState(half ?? str("lead_side_commission"));
+  const [listCom, setListCom] = useState(half != null ? String(Number(values.our_commission) - Number(half)) : str("listing_side_commission"));
+  const ours = String((Number(leadCom) || 0) + (Number(listCom) || 0));
   const [comCur, setComCur] = useState(str("commission_currency") || str("deal_currency") || "USD");
 
   // pre-fill each side from the picked lead / property (still editable)
@@ -58,13 +63,22 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
   // Schedule A: rentals earn one month's rent; sales 3% (suggestion only)
   const suggested = dealType === "sale" ? (Number(value) || 0) * 0.03 : Number(rent) || 0;
 
+  // referral %: the rate already fixed on this closing (same partner), else the partner's own rate
+  const refPct = (pid: string, origPid: string, origPts: string | number | null) =>
+    pid && pid === origPid && origPts != null && Number(origPts) > 0 ? Number(origPts) * 2 : options.partners.find((p) => p.id === pid)?.pct ?? null;
+  const leadRefPct = refPct(leadPartner, str("lead_side_referral_partner_id"), values.lead_referrer_rate ?? null);
+  const listRefPct = refPct(listPartner, str("listing_side_referral_partner_id"), values.listing_referrer_rate ?? null);
+
   const split = useMemo(() => computeSplit({
-    closingDate: date, ourCommission: Number(ours) || null,
+    closingDate: date, leadCommission: Number(leadCom) || null, listingCommission: Number(listCom) || null,
+    leadReferralPct: leadRefPct, listingReferralPct: listRefPct,
     leadModel: (leadModel || null) as Model | null, listingModel: (listModel || null) as Model | null,
     leadAgentId: leadAgent || null, listingAgentId: listAgent || null,
-  }, options.schedules, options.rates, options.hr), [date, ours, leadModel, listModel, leadAgent, listAgent, options]);
+  }, options.schedules, options.rates, options.hr), [date, leadCom, listCom, leadRefPct, listRefPct, leadModel, listModel, leadAgent, listAgent, options]);
   const name = (id: string) => options.agents.find((a) => a.id === id)?.name ?? "No agent";
   const partner = (id: string) => options.partners.find((a) => a.id === id)?.name ?? "—";
+  const pct = (pts: number | null) => (pts == null ? "—" : `${sidePct(pts)}%`);
+  const tenantWord = dealType === "sale" ? "buyer" : "tenant", landlordWord = dealType === "sale" ? "seller" : "landlord";
   const fmt = (x: number | null) => (x == null ? "—" : money(x, comCur));
   const balanced = Math.abs(split.delta) <= 1 && !!Number(ours);
 
@@ -127,9 +141,17 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
           </div>
           <div className="field"><label htmlFor="co_broke_split_pct">Co-broke share %</label><input id="co_broke_split_pct" name="co_broke_split_pct" inputMode="decimal" defaultValue={str("co_broke_split_pct")} /></div>
           <div className="field">
-            <label htmlFor="our_commission">Our commission (after co-broke) *</label>
-            <input id="our_commission" name="our_commission" inputMode="decimal" value={ours} onChange={(e) => setOurs(e.target.value)} required />
-            {suggested > 0 && !ours && <small><button type="button" className="chip-btn" onClick={() => { setOurs(String(Math.round(suggested))); setComCur(dealCur); }}>Use {money(suggested, dealCur)} ({dealType === "sale" ? "3% of price" : "one month's rent"})</button></small>}
+            <label htmlFor="listing_side_commission">From the {landlordWord} (after co-broke)</label>
+            <input id="listing_side_commission" name="listing_side_commission" inputMode="decimal" value={listCom} onChange={(e) => setListCom(e.target.value)} placeholder="0 if we don't charge this side" />
+          </div>
+          <div className="field">
+            <label htmlFor="lead_side_commission">From the {tenantWord} (after co-broke)</label>
+            <input id="lead_side_commission" name="lead_side_commission" inputMode="decimal" value={leadCom} onChange={(e) => setLeadCom(e.target.value)} placeholder="0 if we don't charge this side" />
+          </div>
+          <div className="field">
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Our total commission</span>
+            <strong style={{ fontSize: 18 }}>{Number(ours) ? money(Number(ours), comCur) : "—"}</strong>
+            {suggested > 0 && !Number(ours) && <small><button type="button" className="chip-btn" onClick={() => { const h = Math.round(suggested / 2); setLeadCom(String(h)); setListCom(String(Math.round(suggested) - h)); setComCur(dealCur); }}>Use {money(suggested, dealCur)} ({dealType === "sale" ? "3% of price" : "one month's rent"}), half from each side</button></small>}
           </div>
           <div className="field"><label htmlFor="commission_currency">Commission currency *</label>
             <select id="commission_currency" name="commission_currency" value={comCur} onChange={(e) => setComCur(e.target.value)}><option>USD</option><option>LKR</option></select>
@@ -138,46 +160,47 @@ export function ClosingForm({ values, options }: { values: V; options: ClosingOp
       </fieldset>
 
       <fieldset className="panel form-group">
-        <legend className="section-title">Sides (each worth 50 points)</legend>
+        <legend className="section-title">Sides (each worked out on its own commission)</legend>
         <div className="grid-2">
           <div className="form-stack" style={{ gap: 12 }}>
-            <strong>Lead side</strong>
+            <strong>{label(tenantWord)} side (lead)</strong>
             {sideSel("Agent", leadAgent, setLeadAgent, "lead_side_agent_id")}
             {modelSel("Sourcing model", leadModel, setLeadModel, "lead_sourcing_model")}
             {leadModel.includes("referrer") && <div className="field"><label htmlFor="lead_side_referral_partner_id">Referral partner</label>
-              <select id="lead_side_referral_partner_id" name="lead_side_referral_partner_id" value={leadPartner} onChange={(e) => setLeadPartner(e.target.value)}><option value="">—</option>{options.partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}
+              <select id="lead_side_referral_partner_id" name="lead_side_referral_partner_id" value={leadPartner} onChange={(e) => setLeadPartner(e.target.value)}><option value="">—</option>{options.partners.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pct}%)</option>)}</select></div>}
           </div>
           <div className="form-stack" style={{ gap: 12 }}>
-            <strong>Listing side</strong>
+            <strong>{label(landlordWord)} side (listing)</strong>
             {sideSel("Agent", listAgent, setListAgent, "listing_side_agent_id")}
             {modelSel("Sourcing model", listModel, setListModel, "listing_sourcing_model")}
             {listModel.includes("referrer") && <div className="field"><label htmlFor="listing_side_referral_partner_id">Referral partner</label>
-              <select id="listing_side_referral_partner_id" name="listing_side_referral_partner_id" value={listPartner} onChange={(e) => setListPartner(e.target.value)}><option value="">—</option>{options.partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}
+              <select id="listing_side_referral_partner_id" name="listing_side_referral_partner_id" value={listPartner} onChange={(e) => setListPartner(e.target.value)}><option value="">—</option>{options.partners.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pct}%)</option>)}</select></div>}
           </div>
         </div>
 
         <div className="table-wrap" style={{ marginTop: 16 }}>
           <table className="split">
             <caption className="sr-only">Commission split preview</caption>
-            <thead><tr><th scope="col">Side</th><th scope="col">Agent</th><th scope="col">Referrer</th><th scope="col">Axe</th></tr></thead>
+            <thead><tr><th scope="col">Side</th><th scope="col">Commission</th><th scope="col">Agent</th><th scope="col">Referrer</th><th scope="col">Axe</th></tr></thead>
             <tbody>
               {(["lead", "listing"] as const).map((k) => {
                 const sd = split[k]; const agentId = k === "lead" ? leadAgent : listAgent; const pid = k === "lead" ? leadPartner : listPartner;
                 return (
                   <tr key={k}>
-                    <td>{k === "lead" ? "Lead" : "Listing"}<div className="muted" style={{ fontSize: 12 }}>{name(agentId)} · {sd.exempt ? "owner, exempt" : sd.tenure}</div></td>
-                    <td>{fmt(sd.agent)}<div className="muted" style={{ fontSize: 12 }}>{sd.agentRate ?? "—"} pts</div></td>
-                    <td>{fmt(sd.referrer)}<div className="muted" style={{ fontSize: 12 }}>{sd.referrerRate ?? "—"} pts{sd.referrerRate ? ` · ${partner(pid)}` : ""}</div></td>
-                    <td>{fmt(sd.axe)}<div className="muted" style={{ fontSize: 12 }}>{sd.axeRate ?? "—"} pts</div></td>
+                    <td>{label(k === "lead" ? tenantWord : landlordWord)}<div className="muted" style={{ fontSize: 12 }}>{name(agentId)} · {sd.exempt ? "owner, exempt" : sd.tenure}</div></td>
+                    <td>{fmt(sd.base)}</td>
+                    <td>{fmt(sd.agent)}<div className="muted" style={{ fontSize: 12 }}>{pct(sd.agentRate)}</div></td>
+                    <td>{fmt(sd.referrer)}<div className="muted" style={{ fontSize: 12 }}>{pct(sd.referrerRate)}{sd.referrerRate ? ` · ${partner(pid)}` : ""}</div></td>
+                    <td>{fmt(sd.axe)}<div className="muted" style={{ fontSize: 12 }}>{pct(sd.axeRate)}</div></td>
                   </tr>
                 );
               })}
             </tbody>
-            <tfoot><tr><td>Total</td><td>{fmt(split.agentTotal)}</td><td>{fmt(split.referrerTotal)}</td><td>{fmt(split.axeTotal)}</td></tr></tfoot>
+            <tfoot><tr><td>Total</td><td>{fmt(split.total)}</td><td>{fmt(split.agentTotal)}</td><td>{fmt(split.referrerTotal)}</td><td>{fmt(split.axeTotal)}</td></tr></tfoot>
           </table>
         </div>
         <p style={{ margin: "10px 0 0" }} className={balanced ? "balanced" : "unbalanced"}>
-          {balanced ? "✓ Balanced" : Number(ours) ? `✗ Doesn't balance (off by ${fmt(split.delta)}). Set the sourcing model on both sides.` : "Enter our commission to see the split."}
+          {balanced ? "✓ Balanced" : Number(ours) ? `✗ Doesn't balance (off by ${fmt(split.delta)}). Set the sourcing model on both sides.` : "Enter the commission from each side to see the split."}
           <span className="muted" style={{ fontWeight: 400 }}> · Schedule {split.schedule?.version ?? "?"}</span>
         </p>
         {!balanced && Number(ours) > 0 && (

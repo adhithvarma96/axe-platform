@@ -17,7 +17,7 @@ export async function referralPartnerFields(isSuperAdmin: boolean): Promise<Fiel
     { name: "referrer_category_id", label: "Category", type: "select", options: (cats.data ?? []).map((c) => [c.id, c.name]) },
     { name: "attribution", label: "Whose referrer", type: "select", options: [["company_referrer", "Company referrer"], ["agent_personal_referrer", "Agent's personal referrer"]] },
     { name: "attributed_to_agent_id", label: "Agent", type: "select", options: (agents.data ?? []).map((a) => [a.id, a.full_name]) },
-    { name: "referral_rate_pct", label: "Referral rate (% of Axe's share, max 15)", type: "number" },
+    { name: "referral_rate_pct", label: "Referral rate (% of the referred side's commission, max 15)", type: "number" },
     { name: "agreement_signed_on", label: "Agreement signed", type: "date" },
     { name: "agreement_valid_until", label: "Agreement valid until", type: "date" },
     { name: "address", label: "Address", wide: true },

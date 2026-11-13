@@ -388,6 +388,8 @@ export type Database = {
           lead_referrer_rate: number | null
           lead_side_agent_id: string | null
           lead_side_paid_to_referrer: number | null
+          lead_side_commission: number | null
+          listing_side_commission: number | null
           lead_side_referral_partner_id: string | null
           lead_sourcing_model:
             | Database["public"]["Enums"]["sourcing_model"]
@@ -473,6 +475,8 @@ export type Database = {
           lead_referrer_rate?: number | null
           lead_side_agent_id?: string | null
           lead_side_paid_to_referrer?: number | null
+          lead_side_commission?: number | null
+          listing_side_commission?: number | null
           lead_side_referral_partner_id?: string | null
           lead_sourcing_model?:
             | Database["public"]["Enums"]["sourcing_model"]
@@ -558,6 +562,8 @@ export type Database = {
           lead_referrer_rate?: number | null
           lead_side_agent_id?: string | null
           lead_side_paid_to_referrer?: number | null
+          lead_side_commission?: number | null
+          listing_side_commission?: number | null
           lead_side_referral_partner_id?: string | null
           lead_sourcing_model?:
             | Database["public"]["Enums"]["sourcing_model"]
